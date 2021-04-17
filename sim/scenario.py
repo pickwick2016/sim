@@ -1,6 +1,4 @@
 """
-scenario.py
-~~~~~~~~~~~
 场景相关内容.
 1. 实体 (Entity)
 2. 场景 (Scenario)
