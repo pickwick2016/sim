@@ -1,8 +1,13 @@
-from sim import Entity
+""" 
+常见处置设备.
+"""
+
+from .. import basic
 
 
-class Jammer(Entity):
+class Jammer(basic.Entity):
     """ 干扰器. """
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.power_on = False

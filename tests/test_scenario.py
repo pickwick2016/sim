@@ -4,8 +4,8 @@ import unittest
 import numpy as np
 
 from sim import Scenario, Entity
-from sim.scenario import SimClock
 from sim import vec
+from sim.basic import SimClock
 
 
 class TestScenario(unittest.TestCase):

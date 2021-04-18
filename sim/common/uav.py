@@ -1,11 +1,11 @@
 import copy
 from enum import Enum
 
-from sim import Entity
-from sim import vec
+from .. import basic
+from .. import vec
 
 
-class Uav(Entity):
+class Uav(basic.Entity):
     """ 无人机.
 
     Attributes:
@@ -111,7 +111,6 @@ class UavController:
         self.track_no = 0
 
     def step(self, tt):
-        _, dt = tt
         if self.state in self.state_calls:
             self.state_calls[self.state](self, tt)
 

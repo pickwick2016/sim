@@ -1,7 +1,7 @@
 import math
 
-from sim import Entity
-from sim import vec
+from .. import basic
+from .. import vec
 
 
 def in_range(val, rng) -> bool:
@@ -26,13 +26,13 @@ class AerRange:
         if 'max_r' in kwargs:
             self.range_r[1] = kwargs['max_r']
         if 'min_a' in kwargs:
-            self.range_a[0] = kwargs['min_a']
+            self.range_az[0] = kwargs['min_a']
         if 'max_a' in kwargs:
-            self.range_a[1] = kwargs['max_a']
+            self.range_az[1] = kwargs['max_a']
         if 'min_e' in kwargs:
-            self.range_e[0] = kwargs['min_e']
+            self.range_el[0] = kwargs['min_e']
         if 'max_e' in kwargs:
-            self.range_e[1] = kwargs['max_e']
+            self.range_el[1] = kwargs['max_e']
 
     def contains(self, aer):
         """ 判断目标在范围内. """
@@ -50,7 +50,7 @@ class Beam:
         return self.range.contains(aer2)
 
 
-class Radar(Entity):
+class Radar(basic.Entity):
     """ 雷达.
 
     Attributes:

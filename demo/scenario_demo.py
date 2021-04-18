@@ -2,6 +2,9 @@
 场景 Demo.
 """
 
+import sys
+sys.path.append('../')
+
 from sim import Scenario, Uav, Jammer, Radar
 
 
