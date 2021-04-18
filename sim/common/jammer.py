@@ -3,6 +3,7 @@
 """
 
 from .. import basic
+from .. import vec
 
 
 class Jammer(basic.Entity):
@@ -11,7 +12,7 @@ class Jammer(basic.Entity):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.power_on = False
-        self.position = kwargs['pos']
+        self.position = kwargs['pos'] if 'pos' in kwargs else vec.vec([0, 0])
 
     def info(self) -> str:
         if self.power_on:

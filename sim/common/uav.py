@@ -50,7 +50,7 @@ class Uav(basic.Entity):
         self.velocity = vec.zeros_like(self.position)
 
     def access(self, others):
-        from sim import Jammer
+        from .jammer import Jammer
         actions = {}
         for other in others:
             if isinstance(other, Jammer):
@@ -111,6 +111,10 @@ class UavController:
         self.track_no = 0
 
     def step(self, tt):
+        if len(self.tracks) <= 0:
+            self.uav.deactive()
+            return
+
         if self.state in self.state_calls:
             self.state_calls[self.state](self, tt)
 
@@ -147,11 +151,9 @@ class UavController:
     def _step_on_back(self, tt):
         _, dt = tt
         step, left = vec.move_step(self.sensor_position, self.tracks[0], dt * self.speed)
-        # pos, left = vec.move_to(self.uav.position, self.tracks[0], dt * self.speed)
         self.uav.position = self.uav.position + step
         if left <= 0:
             self.state = UavState.Home
 
     def _step_on_home(self, tt):
-        # self.uav.velocity = vec.zeros_like(self.uav.velocity)
         self.uav.deactive()
