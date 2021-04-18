@@ -6,4 +6,5 @@ class TestUav(unittest.TestCase):
     """ 测试 UAV """
     
     def test_create(self):
-        pass
+        uav = Uav()
+        self.assertTrue(uav is not None)

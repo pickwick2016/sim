@@ -5,7 +5,8 @@
 import sys
 sys.path.append('../')
 
-from sim import Scenario, Uav, Jammer, Radar
+from sim import Scenario
+from sim.common import Uav, Jammer, Radar
 
 
 def print_scene(scene):
