@@ -5,6 +5,8 @@
 2. 场景 (Scenario)
 """
 
+from __future__ import annotations
+
 import copy
 from typing import Optional, Tuple
 
@@ -28,14 +30,19 @@ class Entity:
     """
 
     def __init__(self, **kwargs):
+        self.env = None
         self._id = EntityId.gen()
+        self._name = '' if 'name' not in kwargs else kwargs['name']
         self._active = True
-        self.name = '' if 'name' not in kwargs else kwargs['name']
 
     @property
     def id(self) -> int:
         """ 实体 id. """
         return self._id
+
+    @property
+    def name(self) -> str:
+        return self._name
 
     def reset(self):
         """ 重置状态. """
@@ -62,6 +69,22 @@ class Entity:
     def info(self) -> str:
         """ 实体信息. """
         return ''
+
+    def send_msg(self, reciever: Optional[Entity, id, str], msg) -> bool:
+        """ 发送消息. 
+
+        :param reciever: 收消息的实体. 可以通过 Entity、id 或者 name 指定.
+        :return: 是否发送成功.
+        """
+        if self.env:
+            if recv_obj := self.env.find(reciever):
+                self.env.post_msg(self, recv_obj, msg)
+                return True
+        return False
+
+    def on_msg(self, sender: Entity, msg):
+        """ 接收和处理消息. """
+        pass
 
 
 class SimClock:
@@ -113,9 +136,21 @@ class Scenario:
         self._entities = []
         self.clock = SimClock(**kwargs)
         self.step_handlers = []
+        self._msg_queue = []  # 消息队列.
 
     def set_params(self, **kwargs):
         self.clock.set_params(**kwargs)
+
+    def post_msg(self, sender, reciever, msg):
+        """ 消息入列. """
+        self._msg_queue.append((sender, reciever, msg))
+
+    def _dispatch_msgs(self):
+        """ 分发消息. """
+        for sender, reciever, msg in self._msg_queue:
+            if reciever and reciever.is_active():
+                reciever.on_msg(sender, msg)
+        self._msg_queue.clear()
 
     @property
     def entities(self) -> list:
@@ -127,17 +162,17 @@ class Scenario:
         """ 场景中活动实体列表. """
         return list([e for e in self._entities if e.is_active()])
 
-    def find(self, name=None, id_=None) -> Optional[Entity]:
+    def find(self, ref: Optional[Entity, int, str]) -> Optional[Entity]:
         """ 查找实体.
 
-        :param name: 实体名称.
-        :param id_: 实体 id.
-        :return: 符合条件的实体，或者 None.
+        :param ref: 查找条件. 可以是 obj, id, name  
+        :return: 符合条件的实体，找不到返回None  
         """
+        obj_v = ref if isinstance(ref, Entity) else None
+        id_v = ref if isinstance(ref, int) else None
+        name_v = ref if isinstance(ref, str) else None
         for e in self._entities:
-            id_match = (e.id == id_) if id_ is not None else True
-            name_match = (e.name == name) if name is not None else True
-            if id_match and name_match:
+            if (obj_v and e is obj_v) or (id_v and e.id == id_v) or (name_v and e.name == name_v):
                 return e
         return None
 
@@ -146,16 +181,20 @@ class Scenario:
         assert obj is not None
         ids = [e.id for e in self._entities]
         if obj.id not in ids:
+            obj.env = self
             self._entities.append(obj)
         return obj
 
     def remove(self, obj):
         """ 移除对象. """
         if obj and isinstance(obj, Entity):
+            obj.env = None
             self._entities.remove(obj)
 
     def clear(self):
         """ 移除所有对象. """
+        for e in self._entities:
+            e.env = None
         self._entities.clear()
 
     def step(self):
@@ -181,6 +220,9 @@ class Scenario:
             # 处理步进消息.
             for handler in self.step_handlers:
                 handler(self)
+
+            # 分发消息
+            self._dispatch_msgs()
         return tt
 
     def run(self):
@@ -210,4 +252,3 @@ class Scenario:
                 if obj := self.find(name):
                     if hasattr(obj, attr):
                         setattr(obj, attr, v)
-
