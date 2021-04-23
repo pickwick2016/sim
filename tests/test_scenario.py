@@ -64,14 +64,17 @@ class TestScenario(unittest.TestCase):
     def test_scenario_run(self):
         """ 测试场景运行. """
         scene = Scenario()
-        np.testing.assert_almost_equal(vec.vec(scene.clock_info()), vec.vec([0, 0.1]))
+        np.testing.assert_almost_equal(
+            vec.vec(scene.clock_info()), vec.vec([0, 0.1]))
 
         tt = scene.step()
         self.assertTrue(tt == scene.clock_info())
-        np.testing.assert_almost_equal(vec.vec(scene.clock_info()), vec.vec([0.1, 0.1]))
+        np.testing.assert_almost_equal(
+            vec.vec(scene.clock_info()), vec.vec([0.1, 0.1]))
 
         scene.run()
-        np.testing.assert_almost_equal(vec.vec(scene.clock_info()), vec.vec([10.1, 0.1]))
+        np.testing.assert_almost_equal(
+            vec.vec(scene.clock_info()), vec.vec([10.1, 0.1]))
 
     def test_scenario_msg(self):
         """ 测试场景消息. """
@@ -116,15 +119,18 @@ class TestScenario(unittest.TestCase):
 
         # 测试默认构造下方法.
         clock = SimClock()
-        np.testing.assert_almost_equal(vec.vec(clock.info()), vec.vec([0.0, 0.1]))
+        np.testing.assert_almost_equal(
+            vec.vec(clock.info()), vec.vec([0.0, 0.1]))
 
         tt = clock.step()
         self.assertTrue(tt == clock.info())
-        np.testing.assert_almost_equal(vec.vec(clock.info()), vec.vec([0.1, 0.1]))
+        np.testing.assert_almost_equal(
+            vec.vec(clock.info()), vec.vec([0.1, 0.1]))
 
         while True:
             tt = clock.step()
             if not tt:
                 break
         self.assertTrue(tt is None)
-        np.testing.assert_almost_equal(vec.vec(clock.info()), vec.vec([10.1, 0.1]))
+        np.testing.assert_almost_equal(
+            vec.vec(clock.info()), vec.vec([10.1, 0.1]))
