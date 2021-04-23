@@ -9,7 +9,7 @@ from sim.basic import SimClock
 
 
 class TestScenario(unittest.TestCase):
-    """ 测试 Scenario 文件. """
+    """ 测试 Scenario 模块. """
 
     def test_entity(self):
         """ 测试 entity. """
@@ -35,17 +35,25 @@ class TestScenario(unittest.TestCase):
         """ 测试 Scenario 管理功能. """
         scene = Scenario()
 
-        obj = scene.add(Entity())
+        obj = scene.add(Entity(name='obj_1'))
         self.assertTrue(obj)
         self.assertEqual(len(scene.entities), 1)
 
-        obj2 = scene.add(obj)
-        self.assertTrue(obj is obj2)
+        obj1b = scene.add(obj)
+        self.assertTrue(obj is obj1b)
         self.assertEqual(len(scene.entities), 1)
 
-        obj = scene.add(Entity())
-        self.assertTrue(obj)
+        obj2 = scene.add(Entity(name='obj_2'))
+        self.assertTrue(obj2)
         self.assertEqual(len(scene.entities), 2)
+
+        self.assertTrue(scene.find('obj_1') is obj)
+        self.assertTrue(scene.find(obj.id) is obj)
+        self.assertTrue(scene.find(obj) is obj)
+
+        self.assertTrue(scene.find('obj_2') is obj2)
+        self.assertTrue(scene.find(obj2.id) is obj2)
+        self.assertTrue(scene.find(obj2) is obj2)
 
         scene.remove(obj)
         self.assertEqual(len(scene.entities), 1)
@@ -54,6 +62,7 @@ class TestScenario(unittest.TestCase):
         self.assertEqual(len(scene.entities), 0)
 
     def test_scenario_run(self):
+        """ 测试场景运行. """
         scene = Scenario()
         np.testing.assert_almost_equal(vec.vec(scene.clock_info()), vec.vec([0, 0.1]))
 
@@ -64,7 +73,33 @@ class TestScenario(unittest.TestCase):
         scene.run()
         np.testing.assert_almost_equal(vec.vec(scene.clock_info()), vec.vec([10.1, 0.1]))
 
+    def test_scenario_msg(self):
+        """ 测试场景消息. """
+        obj = Entity()
+        self.assertFalse(obj.send_msg('obj_2', 'msg'))
+
+        class MsgEntity(Entity):
+            def __init__(self, **kwargs):
+                super().__init__(**kwargs)
+                self.msg_counter = 0
+
+            def on_msg(self, sender, msg):
+                self.msg_counter += msg
+
+        scene = Scenario()
+        obj1 = scene.add(MsgEntity(name='obj_1'))
+        obj1.step_handlers.append(lambda obj: obj.send_msg('obj_2', 1))
+
+        obj2 = scene.add(MsgEntity(name='obj_2'))
+        obj2.step_handlers.append(lambda obj: obj.send_msg('obj_1', 1))
+
+        scene.run()
+
+        self.assertTrue(obj1.msg_counter >= 100)
+        self.assertTrue(obj2.msg_counter >= 100)
+
     def test_sim_clock(self):
+        """ 测试仿真时钟. """
         # 测试默认构造
         clock = SimClock()
         self.assertAlmostEqual(clock.start, 0.0)

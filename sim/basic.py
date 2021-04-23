@@ -27,6 +27,7 @@ class Entity:
     Attributes:
         name: 实体名称.
         id: 实体 ID.
+        step_handers: 步进处理列表. List[ step_handle(entity) ]
     """
 
     def __init__(self, **kwargs):
@@ -34,6 +35,7 @@ class Entity:
         self._id = EntityId.gen()
         self._name = '' if 'name' not in kwargs else kwargs['name']
         self._active = True
+        self.step_handlers = []
 
     @property
     def id(self) -> int:
@@ -55,6 +57,11 @@ class Entity:
     def step(self, tt):
         """ 步进. """
         pass
+
+    def on_step(self):
+        """ 步进消息处理. """
+        for handle in self.step_handlers:
+            handle(self)
 
     def is_active(self) -> bool:
         """ 检查活动状态. """
@@ -176,9 +183,10 @@ class Scenario:
                 return e
         return None
 
-    def add(self, obj: Entity):
+    def add(self, obj: Entity) -> Optional[Entity]:
         """ 增加实体. """
-        assert obj is not None
+        if not isinstance(obj, Entity):
+            return None
         ids = [e.id for e in self._entities]
         if obj.id not in ids:
             obj.env = self
@@ -220,6 +228,8 @@ class Scenario:
             # 处理步进消息.
             for handler in self.step_handlers:
                 handler(self)
+            for e in active_entities:
+                e.on_step()
 
             # 分发消息
             self._dispatch_msgs()
