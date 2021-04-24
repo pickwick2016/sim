@@ -29,13 +29,13 @@ class TimeEvent:
 
     def __on_time(self, scene):
         """ 处理定时消息. """
-        now, dt = scene.clock_info()
+        now, dt = scene.clock_info
         if abs(now - self.time) <= 0.1 * dt:
             self.evt(scene)
 
     def __on_times(self, scene):
         """ 处理事件序列消息. """
-        now, dt = scene.clock_info()
+        now, dt = scene.clock_info
         for t in self.times:
             if abs(now - t) < 0.1 * dt:
                 self.evt(scene)
