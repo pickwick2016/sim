@@ -41,7 +41,8 @@ class Uav(basic.Entity):
         prev_pos = copy.copy(self.position)
         if self.is_active():
             self.controller.step(tt)
-        self.velocity = (self.position - prev_pos) / dt
+        self.velocity = (self.position - prev_pos) / \
+            dt if dt > 0.0 else vec.zeros_like(self.position)
 
     def reset(self):
         self.controller.reset()
@@ -85,7 +86,8 @@ class UavController:
         """
         self.uav = uav
 
-        self.tracks = list([vec.vec(pt) for pt in kwargs['tracks']]) if 'tracks' in kwargs else []
+        self.tracks = list(
+            [vec.vec(pt) for pt in kwargs['tracks']]) if 'tracks' in kwargs else []
         self.track_no = 0
         self.speed = kwargs['speed'] if 'speed' in kwargs else 1.0
         self.two_way = kwargs['two_way'] if 'two_way' in kwargs else True
@@ -134,7 +136,8 @@ class UavController:
             self.track_no = 1
         else:
             if self.track_no < len(self.tracks):
-                step, left = vec.move_step(self.sensor_position, self.tracks[self.track_no], dt * self.speed)
+                step, left = vec.move_step(
+                    self.sensor_position, self.tracks[self.track_no], dt * self.speed)
                 # pos, left = vec.move_to(self.uav.position, self.tracks[self.track_no], dt * self.speed)
                 if left <= 0:
                     self.track_no += 1
@@ -150,7 +153,8 @@ class UavController:
 
     def _step_on_back(self, tt):
         _, dt = tt
-        step, left = vec.move_step(self.sensor_position, self.tracks[0], dt * self.speed)
+        step, left = vec.move_step(
+            self.sensor_position, self.tracks[0], dt * self.speed)
         self.uav.position = self.uav.position + step
         if left <= 0:
             self.state = UavState.Home

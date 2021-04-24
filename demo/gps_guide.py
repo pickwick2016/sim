@@ -7,10 +7,13 @@ import copy
 import random
 from typing import Tuple
 
+import sys
+sys.path.append('../')
+
 import sim
-from rl_agent import CmdAgent
-from sim import Environment, Uav, Jammer, Radar
 from sim import vec
+from sim.rl import Environment
+from sim.common import Uav, Jammer, Radar
 
 
 class GpsAgent:
@@ -22,7 +25,7 @@ class GpsAgent:
     def decide(self, scene):
         acts = {}
         if uav := scene.find('uav'):
-            _, dt = scene.clock_info()
+            _, dt = scene.clock_info
             self.pos = copy.copy(uav.position)
             self.vel = copy.copy(uav.velocity)
             fake_pos = self.vel * dt - self.target + 1 * self.pos
@@ -47,7 +50,7 @@ def play_once():
     """ 玩一次. """
     agent = GpsAgent()
     scene = sim.Scenario()
-    painter = sim.Painter()
+    painter = sim.visualize.Painter()
     setup_scene(scene)
 
     uav = scene.find('uav')

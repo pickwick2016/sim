@@ -2,10 +2,13 @@
 强化学习(RL, Reinforce Learning)环境工具.
 """
 
+from __future__ import annotations
 from typing import Tuple, Any, Dict
 
-import sim
-from sim import paint
+from .basic import Scenario
+from .visualize import Painter
+
+
 
 
 class Environment:
@@ -25,10 +28,10 @@ class Environment:
         :param agent: 与环境绑定的 agent. 用于场景状态编码和场景动作解码.   
         :param dt: display interval. 0表示尽快显示. 
         """
-        self.scene = sim.Scenario(**kwargs)
+        self.scene = Scenario(**kwargs)
         self.referee = referee if referee is not None else RlReferee()
         self.agent = agent
-        self.painter = paint.Painter(dt=dt)
+        self.painter = Painter(dt=dt)
         self.need_info = True
         self.total_reward = 0.0
 
@@ -68,7 +71,7 @@ class Environment:
 
     def _info(self) -> str:
         infos = list()
-        infos.append('{0:.2f} :'.format(self.scene.clock_info()[0]))
+        infos.append('{0:.2f} :'.format(self.scene.clock_info[0]))
         for e in self.scene.entities:
             if s := e.info():
                 infos.append(s)

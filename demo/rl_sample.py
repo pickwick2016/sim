@@ -2,14 +2,18 @@
 强化学习示例.
 """
 
+
 import math
 import random
 from typing import Tuple
 
-from sim import Environment
-from sim import Uav, Jammer, Radar, RlReferee
-from sim import vec
 
+import sys
+sys.path.append('../')
+
+from sim import vec
+from sim.common import Uav, Jammer, Radar
+from sim.rl import Environment, RlReferee
 
 ##############################################################################
 # 决策代理

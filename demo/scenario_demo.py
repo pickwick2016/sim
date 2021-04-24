@@ -13,7 +13,7 @@ from sim.event import TimeEvent
 
 def print_scene(scene):
     """ 打印场景信息. """
-    tt = scene.clock_info()
+    tt = scene.clock_info
     print('{:.2f}'.format(tt[0]))
 
     for e in scene.entities:
