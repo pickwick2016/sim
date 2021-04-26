@@ -21,18 +21,19 @@ def print_scene(scene):
             print(info)
 
 
-def switch_jammer(scene):
+def switch_jammer(jammer):
     """ 切换干扰机开关. """
-    if jammer := scene.find('jammer-1'):
-        jammer.power_on = not jammer.power_on
+    assert jammer
+    jammer.power_on = not jammer.power_on
 
 
 def main():
     scene = Scenario(end=20)
     scene.step_handlers.append(print_scene)
-    scene.step_handlers.append(TimeEvent(times=[5, 11], evt=switch_jammer))
 
-    scene.add(Jammer(name='jammer-1', pos=[0, 0]))
+    jammer = scene.add(Jammer(name='jammer-1', pos=[0, 0]))
+    jammer.step_handlers.append(TimeEvent(times=[5, 11], evt=switch_jammer))
+
     scene.add(Uav(name='uav-1', tracks=[[0, 0], [10, 10]], two_way=True))
 
     scene.reset()
