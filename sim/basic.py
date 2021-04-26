@@ -44,6 +44,10 @@ class Entity:
         """ 实体相关联的场景. """
         return self._scene
 
+    @property
+    def clock_info(self) -> Tuple[float, float]:
+        return self._scene.clock_info if self._scene else None
+
     def attach(self, scene=None):
         """ 关联场景. """
         self._scene = scene
