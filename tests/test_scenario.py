@@ -141,3 +141,37 @@ class TestScenario(unittest.TestCase):
         self.assertTrue(tt is None)
         np.testing.assert_almost_equal(
             vec.vec(clock.info()), vec.vec([10.1, 0.1]))
+
+    def test_multi_entity(self):
+        """ 测试多实体场景. """
+        import time
+        start_t = time.time()
+
+        scene = Scenario()
+
+        class CounterEntity(Entity):
+            def __init__(self, **kwargs):
+                super().__init__(**kwargs)
+                self.counter = 0
+                self.max_counter = 0
+
+            def access(self, others):
+                max_num = 0
+                for other in others:
+                    self.counter += 1
+                    if max_num < other.max_counter:
+                        max_num = other.max_counter
+                self.max_counter = max_num + 1
+
+        for _ in range(200):
+            scene.add(CounterEntity())
+        scene.step_handlers.append(lambda s: print(s.clock_info))
+        scene.reset()
+        scene.run()
+        self.assertEqual(len(scene.entities), 100)
+        self.assertEqual(scene.entities[0].counter, 99 * 101)
+        self.assertEqual(scene.entities[10].max_counter, 101)
+
+        dt = time.time() - start_t
+        print('total_time: 10s - real_time: {}s'.format(dt))
+        self.assertTrue(dt < 10.0)
