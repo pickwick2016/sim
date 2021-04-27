@@ -184,12 +184,12 @@ class Scenario:
             others = [se for se in shadow_entities if se.id != e.id]
             e.access(others)
 
+        self._dispatch_msgs()
+
         for handler in self.step_handlers:
             handler(self)
         for e in active_entities:
             e.on_step()
-
-        self._dispatch_msgs()
 
         ret = self.clock.step()
         return ret
