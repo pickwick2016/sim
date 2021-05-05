@@ -23,7 +23,8 @@ class FSM:
         self._initial = initial
         self._handlers = self.__setup_handlers(handlers)
         self._transitions = transitions
-        self._current_state = self._states[0]
+        self._current_state = None
+        self.reset()
 
     def __setup_handlers(self, handlers):
         """ 初始化状态处理/动作字典. """
@@ -65,8 +66,7 @@ class FSM:
         return self._states
 
     def handle(self, event) -> None:
-        """ 处理事件. 
-        """
+        """ 处理事件. """
         if self.current_state in self._handlers:
             if handler := self._handlers[self._current_state]:
                 next_state = handler(self, event)
