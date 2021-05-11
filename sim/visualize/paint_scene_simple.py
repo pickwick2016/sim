@@ -3,7 +3,6 @@
 """
 
 from __future__ import annotations
-from sim.visualize import paint_qt
 
 from .basic import Painter
 from sim.common import Uav, Jammer, Radar
