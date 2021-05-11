@@ -83,7 +83,6 @@ class QtRenderView(RenderView):
         super().__init__()
         self.app = QApplication(sys.argv)
         self.win = SceneWidget()
-        # self.ui_thread = Process(target=self.loop)
         self.ui_thread = Thread(target=self.loop)
 
     def loop(self):
