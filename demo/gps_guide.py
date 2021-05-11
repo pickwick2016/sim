@@ -50,7 +50,7 @@ def play_once():
     """ 玩一次. """
     agent = GpsAgent()
     scene = sim.Scenario()
-    painter = sim.visualize.Painter()
+    painter = sim.visualize.QtRenderView()
     setup_scene(scene)
 
     uav = scene.find('uav')
