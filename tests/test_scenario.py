@@ -163,7 +163,7 @@ class TestScenario(unittest.TestCase):
                         max_num = other.max_counter
                 self.max_counter = max_num + 1
 
-        for _ in range(200):
+        for _ in range(100):
             scene.add(CounterEntity())
         scene.step_handlers.append(lambda s: print(s.clock_info))
         scene.reset()

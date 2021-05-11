@@ -2,11 +2,11 @@ import time
 import math
 import pygame
 
-import sim
+from sim.common import Uav, Jammer, Radar
 from sim import vec
 
 
-class Painter:
+class PgPainter:
     """ 绘图器.
     """
 
@@ -65,11 +65,11 @@ class Painter:
 
 
 def draw_entity(painter, e):
-    if isinstance(e, sim.Uav):
+    if isinstance(e, Uav):
         draw_uav(painter, e)
-    elif isinstance(e, sim.Radar):
+    elif isinstance(e, Radar):
         draw_radar(painter, e)
-    elif isinstance(e, sim.Jammer):
+    elif isinstance(e, Jammer):
         draw_jammer(painter, e)
 
 

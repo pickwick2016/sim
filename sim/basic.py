@@ -8,7 +8,7 @@
 from __future__ import annotations
 
 import copy
-from typing import Optional, Tuple, List, Callable, Any
+from typing import Optional, Tuple, List, Callable, Any, Union
 
 
 class Entity:
@@ -83,7 +83,7 @@ class Entity:
         """ 与其他实体交互，改变自己状态. """
         pass
 
-    def send_msg(self, reciever: Optional[Entity, id, str], msg) -> bool:
+    def send_msg(self, reciever: Union[Entity, int, str], msg) -> bool:
         """ 发送消息. 
 
         :param reciever: 收消息的实体. 可以通过 Entity、id 或者 name 指定.
@@ -128,7 +128,7 @@ class Scenario:
         """ 场景中活动实体列表. """
         return list([e for e in self._entities if e.is_active()])
 
-    def find(self, ref: Optional[Entity, int, str]) -> Optional[Entity]:
+    def find(self, ref: Union[Entity, int, str]) -> Optional[Entity]:
         """ 查找实体.
 
         :param ref: 查找条件. 可以是 obj, id, name  
