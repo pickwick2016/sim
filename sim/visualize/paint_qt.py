@@ -8,7 +8,7 @@ import sys
 from threading import Thread
 
 from PyQt5.QtWidgets import QWidget, QApplication
-from PyQt5.QtGui import QPainter, QColor, QPen
+from PyQt5.QtGui import QPainter, QColor, QPen, QTransform
 from PyQt5.QtCore import QPointF, QRectF
 
 from .basic import RenderView, Painter
@@ -57,7 +57,7 @@ class SceneWidget(QWidget):
         self.initUI()
 
     def initUI(self):
-        self.resize(600, 400)
+        self.resize(800, 600)
         self.setWindowTitle('sim framework')
         self.show()
 
@@ -66,7 +66,14 @@ class SceneWidget(QWidget):
         qp.begin(self)
         if self.scene:
             s = self.rect().size()
-            qp.setWindow(-s.width() / 2, s.height() / 2, s.width(), -s.height())
+            w, h = s.width(), s.height()
+            qp.setWindow(-w / 2, h / 2, w, -h)
+
+            # trans = QTransform()
+            # trans.translate(w/2, h / 2)
+            # trans.scale(0.5, 0.5)
+            # qp.setTransform(trans)
+
             qp2 = QtPainter(qp)
             self.drawScene(qp2)
         qp.end()
