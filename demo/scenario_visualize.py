@@ -14,7 +14,7 @@ from sim import Scenario
 def main():
     renderer = QtRenderView()
 
-    scene = Scenario(end=60)
+    scene = Scenario(end=40)
     scene.add(Jammer(pos=[-30, 30]))
     scene.add(Radar(pos=[0, 30]))
     scene.add(Uav(name='uav-1', tracks=[[0, 0], [150, 150]], speed=10.0))

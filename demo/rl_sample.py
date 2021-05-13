@@ -97,10 +97,10 @@ class DqnAgent:
 # 裁判
 ##############################################################################
 
-class SimpleReferee(RlReferee):
+class SimpleReferee:
     """ 简单裁判. """
 
-    def calc_reward(self, scene) -> Tuple[float, bool]:
+    def __call__(self, scene) -> Tuple[float, bool]:
         """ 计算奖励值（reward, done）
 
         :return:

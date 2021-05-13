@@ -11,6 +11,12 @@ from sim.basic import SimClock
 class TestScenario(unittest.TestCase):
     """ 测试 Scenario 模块. """
 
+    def test_simple(self):
+        scene = Scenario()
+        scene.add(Entity())
+        scene.reset()
+        scene.step()
+
     def test_entity(self):
         """ 测试 entity. """
         # 测试 id
@@ -80,7 +86,7 @@ class TestScenario(unittest.TestCase):
         scene.run()
         np.testing.assert_almost_equal(
             vec.vec(scene.clock_info), vec.vec([10.1, 0.1]))
-        self.assertAlmostEqual(time_rec[0], 0.0)
+        self.assertAlmostEqual(time_rec[0], 0.1)
         self.assertAlmostEqual(time_rec[-1], 10.0)
 
     def test_scenario_msg(self):
@@ -153,24 +159,20 @@ class TestScenario(unittest.TestCase):
             def __init__(self, **kwargs):
                 super().__init__(**kwargs)
                 self.counter = 0
-                self.max_counter = 0
 
             def access(self, others):
-                max_num = 0
                 for other in others:
                     self.counter += 1
-                    if max_num < other.max_counter:
-                        max_num = other.max_counter
-                self.max_counter = max_num + 1
 
-        for _ in range(100):
+        obj_num = 100
+        times = 100
+        for _ in range(obj_num):
             scene.add(CounterEntity())
         scene.step_handlers.append(lambda s: print(s.clock_info))
         scene.reset()
         scene.run()
-        self.assertEqual(len(scene.entities), 100)
-        self.assertEqual(scene.entities[0].counter, 99 * 101)
-        self.assertEqual(scene.entities[10].max_counter, 101)
+        self.assertEqual(len(scene.entities), obj_num)
+        self.assertEqual(scene.entities[0].counter, times * (obj_num-1))
 
         dt = time.time() - start_t
         print('total_time: 10s - real_time: {}s'.format(dt))

@@ -12,10 +12,9 @@ from sim import Scenario
 
 def setup_scene(scene):
     """ 初始化场景. """
-    scene.add(Uav())
+    scene.add(Uav(tracks=[[0, 0], [10, 10]]))
     scene.add(Radar())
     scene.add(Jammer())
-    scene.add(Uav())
 
 
 def main():

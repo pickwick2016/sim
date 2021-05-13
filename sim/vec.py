@@ -3,21 +3,7 @@
 """
 
 import numpy as np
-
-
-def dist(v1, v2=None):
-    """ 两个点的距离. """
-    v = v1 if v2 is None else (v1 - v2)
-    return np.linalg.norm(v)
-
-
-def unit(v):
-    """ 计算单位向量. """
-    d = dist(v)
-    if d > 0.:
-        return v / dist(v)
-    else:
-        return zeros_like(v)
+import math
 
 
 def vec(v):
@@ -30,8 +16,47 @@ def zeros_like(v):
     return np.zeros_like(v)
 
 
+def dist(v1, v2=None) -> float:
+    """ 两个点的距离. """
+    v = v1 if v2 is None else (v1 - v2)
+    return np.linalg.norm(v)
+
+
+def norm(v) -> float:
+    """ 向量的模. """
+    return np.linalg.norm(v)
+
+
+def unit(v):
+    """ 计算单位向量. """
+    d = norm(v)
+    if d > 0.:
+        return v / dist(v)
+    else:
+        return zeros_like(v)
+
+
+def angle(v1, v2) -> float:
+    """ 计算向量夹角
+
+    :return: 向量夹角的弧度值.
+    """
+    if norm(v1) > 0. and norm(v2) > 0.:
+        return math.acos(np.dot(unit(v1), unit(v2)))
+    else:
+        return 0.
+
+
+def proj(v1, v2):
+    """ 计算v1投影到v2上的向量. """
+    v2u = unit(v2)
+    return v2u * np.dot(v1, v2u)
+
+
 def move_to(p0, p1, d):
     """ 向目的地移动一定距离.
+
+    ! 将被转移至 move 模块.
 
     :param p0: 出发位置.
     :param p1: 目标位置.
@@ -48,6 +73,8 @@ def move_to(p0, p1, d):
 def move_step(p0, p1, d):
     """ 向目的地移动一步（向量）.
 
+    ! 将被转移至 move 模块.
+    
     :param p0: 出发位置.
     :param p1: 目标位置.
     :param d: 移动距离.

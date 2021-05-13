@@ -36,7 +36,7 @@ class Painter:
 class RenderView:
     """ 渲染窗口. """
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         """ 初始化. """
         pass
 

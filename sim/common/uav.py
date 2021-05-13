@@ -1,8 +1,10 @@
+from __future__ import annotations
 import copy
 from enum import Enum
 
 from .. import basic
 from .. import vec
+from . import rules
 
 
 class Uav(basic.Entity):
@@ -19,8 +21,12 @@ class Uav(basic.Entity):
     def __init__(self, **kwargs):
         """ 初始化. """
         super().__init__(**kwargs)
+
         self.controller = UavController(uav=self, **kwargs)
 
+        self.access_results = {}
+        self.access_rules.append(rules.uav_access_jammer)
+        
         self.position = 0.0
         self.velocity = 0.0
 
@@ -41,8 +47,8 @@ class Uav(basic.Entity):
         prev_pos = copy.copy(self.position)
         if self.is_active():
             self.controller.step(tt)
-        self.velocity = (self.position - prev_pos) / \
-            dt if dt > 0.0 else vec.zeros_like(self.position)
+        self.velocity = (self.position - prev_pos) / dt \
+            if dt > 0.0 else vec.zeros_like(self.position)
 
     def reset(self):
         self.controller.reset()
@@ -51,15 +57,9 @@ class Uav(basic.Entity):
         self.velocity = vec.zeros_like(self.position)
 
     def access(self, others):
-        from .jammer import Jammer
-        actions = {}
-        for other in others:
-            if isinstance(other, Jammer):
-                if other.power_on:
-                    if 'jam' not in actions:
-                        actions['jam'] = []
-                    actions['jam'].append(1)
-        self.controller.take(actions)
+        self.access_results.clear()
+        super().access(others)
+        self.controller.take(self.access_results)
 
     def info(self) -> str:
         if self.is_active():

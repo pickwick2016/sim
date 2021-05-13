@@ -11,7 +11,8 @@ import sys
 sys.path.append('../')
 
 import sim
-from sim import vec
+from sim import Scenario, vec, util
+from sim.event import StepEvent
 from sim.rl import Environment
 from sim.common import Uav, Jammer, Radar
 
@@ -46,22 +47,28 @@ def setup_scene(scene):
     scene.add(Uav(name='uav', tracks=[pt, [-10, -10]], speed=speed, life=50.0, two_way=False))
 
 
+def print_uav(uav: Uav):
+    if uav and uav.is_active:
+        print(uav.position, uav.sensor_position, vec.dist(uav.velocity))
+
+
 def play_once():
     """ 玩一次. """
-    agent = GpsAgent()
-    scene = sim.Scenario()
-    painter = sim.visualize.QtRenderView()
+    renderer = sim.visualize.QtRenderView()
+    
+    scene = Scenario()
     setup_scene(scene)
+    scene.step_handlers.append(StepEvent(entity='uav', evt=print_uav))
 
-    uav = scene.find('uav')
+    agent = GpsAgent()
+
     tt = scene.reset()
     while tt:
         acts = agent.decide(scene)
-        scene.accept_actions(acts)
+        util.set_entity_attributes(scene, acts)
+
         tt = scene.step()
-        painter.render(scene)
-        if uav:
-            print(uav.position, uav.sensor_position, vec.dist(uav.velocity))
+        renderer.render(scene)
 
 if __name__ == '__main__':
     play_once()

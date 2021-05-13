@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 
 from sim import Scenario, Entity
-from sim.event import TimeEvent
+from sim.event import StepEvent
 from sim.common import Radar, Uav
 from sim import vec
 
@@ -43,7 +43,7 @@ class TestRadar(unittest.TestCase):
         radar = scene.add(Radar())
         target = scene.add(Target(pos=[50, 50]))
 
-        scene.step_handlers.append(TimeEvent(time=6.0, evt=lambda s: s.remove(target)))
+        scene.step_handlers.append(StepEvent(times=6.0, evt=lambda s: s.remove(target)))
 
         ts = set()
         scene.reset()

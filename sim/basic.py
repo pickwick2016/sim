@@ -8,7 +8,7 @@
 from __future__ import annotations
 
 import copy
-from typing import Optional, Tuple, List, Callable, Any, Union
+from typing import Optional, Tuple, List, Callable, Union
 
 
 class Entity:
@@ -18,222 +18,183 @@ class Entity:
         name: 实体名称.
         id: 实体 ID.
         step_handlers: 步进处理列表. List[ step_handle(entity) ]
-        msg_handlers: 消息处理列表. List[ msg_handle(sender, msg) -> bool]
+        access_rules: 交互规则列表.
     """
 
-    def __init__(self, **kwargs):
-        self.step_handlers: List[Callable[[Entity, Any], bool]] = []
-        self.msg_handlers: List[Callable[[Entity], None]] = []
-        self._id: int = EntityId.gen()
-        self._name: str = '' if 'name' not in kwargs else kwargs['name']
-        self._scene: Optional[Scenario] = None
-        self._active: bool = True
+    def __init__(self, name: str='', **kwargs):
+        """ 初始化.
+
+        :param name: 实体名称.        
+        """
+        self.__id: int = EntityId.gen()
+        self.__name: str = name
+        self.__active: bool = True
+        self.__scene: Optional[Scenario] = None
+        self.access_rules: List[Callable[[Entity, Entity], None]] = []
 
     @property
     def id(self) -> int:
         """ 实体 id. """
-        return self._id
+        return self.__id
 
     @property
     def name(self) -> str:
         """ 实体名称. """
-        return self._name
+        return self.__name
 
     @property
     def scene(self) -> Optional[Scenario]:
         """ 实体相关联的场景. """
-        return self._scene
+        return self.__scene
 
     @property
     def clock_info(self) -> Tuple[float, float]:
-        return self._scene.clock_info if self._scene else None
+        return self.__scene.clock_info if self.__scene else None
 
     def attach(self, scene=None):
         """ 关联场景. """
-        self._scene = scene
+        self.__scene = scene
 
     def is_active(self) -> bool:
         """ 检查活动状态. """
-        return self._active
+        return self.__active
 
-    def deactive(self):
+    def deactive(self) -> None:
         """ 退出活动状态.
         退出活动状态后，实体将不再参与仿真.
         """
-        self._active = False
+        self.__active = False
 
-    def info(self) -> str:
-        """ 实体信息. """
-        return ''
-
-    def reset(self):
+    def reset(self) -> None:
         """ 重置状态. """
-        pass
+        self.__active = True
 
-    def step(self, tt):
-        """ 步进. """
-        pass
-
-    def on_step(self):
-        """ 步进消息处理. """
-        for handle in self.step_handlers:
-            handle(self)
-
-    def access(self, others):
-        """ 与其他实体交互，改变自己状态. """
-        pass
-
-    def send_msg(self, reciever: Union[Entity, int, str], msg) -> bool:
-        """ 发送消息. 
-
-        :param reciever: 收消息的实体. 可以通过 Entity、id 或者 name 指定.
-        :return: 是否发送成功.
+    def step(self, clock_info: Tuple[float, float]) -> None:
+        """ 步进.
+        
+        :param clock_info: 当前时钟信息.
         """
-        if self._scene:
-            if recv_obj := self.scene.find(reciever):
-                self.scene.post_msg(self, recv_obj, msg)
-                return True
-        return False
+        pass
 
-    def on_msg(self, sender: Entity, msg):
-        """ 接收和处理消息. """
-        for handler in self.msg_handlers:
-            if not handler(sender, msg):
-                break
+    def access(self, others: List[Entity]) -> None:
+        """ 与其他实体交互，改变自己状态. 
+
+        :param others: 其他实体.
+        """
+        for other in others:
+            for rule in self.access_rules:
+                rule(self, other)
 
 
 class Scenario:
-    """ 场景.
-
-    Attributes:
-        step_handlers: 步进处理器列表.: List[ step_handle(Scenario) ]
-    """
+    """ 场景.  """
 
     def __init__(self, **kwargs):
-        self._entities = []
-        self.clock = SimClock(**kwargs)
-        self.step_handlers = []
-        self._msg_queue = []  # 消息队列.
+        """ 初始化. 
+        
+        :param start: 场景起始时间.  默认值是0s。  
+        :param end: 仿真结束时间.  默认值是10s。  
+        :param step: 仿真步长.默认值是0.1s。  
+        """
+        self.__entities: List[Entity] = []
+        self.__clock = SimClock(**kwargs)
+        self.step_handlers: List[Callable[[Scenario], None]] = []
 
     def set_params(self, **kwargs):
-        self.clock.set_params(**kwargs)
+        self.__clock.set_params(**kwargs)
 
     @property
-    def entities(self) -> list:
+    def entities(self) -> List[Entity]:
         """ 场景中的实体列表. """
-        return self._entities
+        return self.__entities
 
     @property
-    def active_entities(self) -> list:
+    def active_entities(self) -> List[Entity]:
         """ 场景中活动实体列表. """
-        return list([e for e in self._entities if e.is_active()])
-
-    def find(self, ref: Union[Entity, int, str]) -> Optional[Entity]:
-        """ 查找实体.
-
-        :param ref: 查找条件. 可以是 obj, id, name  
-        :return: 符合条件的实体，找不到返回None  
-        """
-        obj_v = ref if isinstance(ref, Entity) else None
-        id_v = ref if isinstance(ref, int) else None
-        name_v = ref if isinstance(ref, str) else None
-        for e in self._entities:
-            if (obj_v and e is obj_v) or (id_v and e.id == id_v) or (name_v and e.name == name_v):
-                return e
-        return None
-
-    def add(self, obj: Entity) -> Optional[Entity]:
-        """ 增加实体. """
-        if not isinstance(obj, Entity):
-            return None
-        ids = [e.id for e in self._entities]
-        if obj.id not in ids:
-            obj.attach(self)
-            self._entities.append(obj)
-        return obj
-
-    def remove(self, obj):
-        """ 移除对象. """
-        if obj and isinstance(obj, Entity):
-            obj.attach(None)
-            self._entities.remove(obj)
-
-    def clear(self):
-        """ 移除所有对象. """
-        for obj in self._entities:
-            obj.attach(None)
-        self._entities.clear()
-
-    def step(self):
-        """ 步进.
-
-        :return: 当前时间信息 (now, dt)， None表示执行完毕.
-        :see: SimClock.step()
-        """
-        if self.clock.is_over():
-            return None
-
-        tt = self.clock.info()
-        active_entities = self.active_entities
-
-        for e in active_entities:
-            e.step(tt)
-
-        shadow_entities = copy.deepcopy(active_entities)
-        for e in active_entities:
-            others = [se for se in shadow_entities if se.id != e.id]
-            e.access(others)
-
-        self._dispatch_msgs()
-
-        for handler in self.step_handlers:
-            handler(self)
-        for e in active_entities:
-            e.on_step()
-
-        ret = self.clock.step()
-        return ret
-
-    def run(self):
-        """ 连续运行. """
-        while self.step():
-            pass
-
-    def reset(self):
-        """ 重置场景. """
-        self.clock.reset()
-        for e in self._entities:
-            e.reset()
-        return self.clock_info
+        return list([e for e in self.__entities if e.is_active()])
 
     @property
     def clock_info(self) -> Tuple[float, float]:
-        return self.clock.info()
+        return self.__clock.info()
 
-    def post_msg(self, sender, reciever, msg):
-        """ 消息入列. """
-        self._msg_queue.append((sender, reciever, msg))
+    def add(self, obj: Entity) -> Optional[Entity]:
+        """ 增加实体. """
+        if isinstance(obj, Entity):
+            ids = [e.id for e in self.__entities]
+            if obj.id not in ids:
+                obj.attach(self)
+                self.__entities.append(obj)
+            return obj
+        return None
 
-    def _dispatch_msgs(self):
-        """ 分发消息. """
-        msg_queue = copy.copy(self._msg_queue)
-        self._msg_queue.clear()
-        for sender, reciever, msg in msg_queue:
-            if reciever and reciever.is_active():
-                reciever.on_msg(sender, msg)
+    def remove(self, obj_ref: Union[Entity, int, str]) -> bool:
+        """ 移除对象. """
+        if obj := self.find(obj_ref):
+            obj.attach(None)
+            self.__entities.remove(obj)
+        return obj is not None
 
-    def accept_actions(self, actions):
-        """ 接收和执行指令.
+    def clear(self):
+        """ 移除所有实体. """
+        for obj in self.__entities:
+            obj.attach(None)
+        self.__entities.clear()
 
-        :param actions: 指令集. { object.property = value }
+    def find(self, obj_ref: Union[Entity, int, str], active=True) -> Optional[Entity]:
+        """ 查找实体.
+
+        :param ref: 查找条件. 可以是实体、实体id、实体名字.    
+        :return: 符合条件的实体，找不到返回None  
         """
-        for k, v in actions.items():
-            str_s = k.split('.')
-            if len(str_s) == 2:
-                name, attr = str_s[0], str_s[1]
-                if obj := self.find(name):
-                    if hasattr(obj, attr):
-                        setattr(obj, attr, v)
+        obj_v = obj_ref if isinstance(obj_ref, Entity) else None
+        id_v = obj_ref if isinstance(obj_ref, int) else None
+        name_v = obj_ref if isinstance(obj_ref, str) else None
+        for e in self.__entities:
+            if (obj_v and e is obj_v) or (id_v and e.id == id_v) or (name_v and e.name == name_v):
+                return e if (not active) or e.is_active else None
+        return None
+
+    def reset(self) -> Tuple[float, float]:
+        """ 重置场景. 
+        
+        :return: 场景起始时钟信息.
+        """
+        self.__clock.reset()
+        for e in self.__entities:
+            e.reset()
+        return self.clock_info
+
+    def step(self) -> Optional[Tuple[float, float]]:
+        """ 步进.
+
+        :return: 当前时钟信息 (now, dt)， None表示执行完毕.
+        :see: SimClock.step()
+        """
+        tt = self.__clock.step()
+        if tt is not None:
+            active_entities = self.active_entities
+            for e in active_entities:
+                e.step(tt)
+
+            active_entities = self.active_entities
+            shadow_entities = copy.deepcopy(active_entities)
+            for obj in active_entities:
+                others = [other for other in shadow_entities if other.id != obj.id]
+                obj.access(others)
+
+            for handler in self.step_handlers:
+                handler(self)
+        return tt
+
+    def run(self, reset=True):
+        """ 连续运行. 
+
+        :param reset: 是否自动重置.
+        """
+        if reset:
+            self.reset()
+        while self.step():
+            pass
 
 
 class SimClock:
@@ -249,8 +210,9 @@ class SimClock:
         self.start = 0.0
         self.end = 10.0
         self.dt = 0.1
+        self.now = 0.0
         self.set_params(**kwargs)
-        self.now = self.start
+        self.reset()
 
     def set_params(self, **kwargs):
         self.start = kwargs['start'] if 'start' in kwargs else self.start
@@ -279,12 +241,18 @@ class SimClock:
 
     def is_over(self) -> bool:
         """ 是否结束. """
+        if self.end is None:
+            return False
         return self.now > self.end
 
 
 class EntityId:
     """ 实体 ID 生成. """
     __id = 0
+
+    @staticmethod
+    def reset():
+        EntityId.__id = 0
 
     @staticmethod
     def gen():
