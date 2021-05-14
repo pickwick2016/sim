@@ -34,8 +34,8 @@ def main():
     scene.step_handlers.append(print_scene)
     scene.step_handlers.append(lambda s: time.sleep(0.01))
 
-    jammer = scene.add(Jammer(name='jammer-1', pos=[0, 0]))
-    scene.step_handlers.append(StepEvent(times=[5, 11], entity=jammer, evt=switch_jammer))
+    jammer = scene.add(Jammer(name='jammer-1', pos=[0, 0], max_r=60))
+    scene.step_handlers.append(StepEvent(times=[5, 12], entity=jammer, evt=switch_jammer))
 
     scene.add(Uav(name='uav-1', tracks=[[100, 100], [0, 0]], two_way=True, speed=10))
 

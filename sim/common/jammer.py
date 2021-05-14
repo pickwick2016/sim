@@ -11,6 +11,7 @@ TODO: 设置干扰样式
 
 from .. import basic
 from .. import vec
+from . import util
 
 
 class Jammer(basic.Entity):
@@ -23,8 +24,9 @@ class Jammer(basic.Entity):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.aer_range = util.AerRange(**kwargs)
         self.power_on = False
-        self.position = kwargs['pos'] if 'pos' in kwargs else vec.vec([0, 0])
+        self.position = vec.vec([0, 0])
         self.set_params(**kwargs)
 
     def set_params(self, **kwargs):
@@ -34,6 +36,11 @@ class Jammer(basic.Entity):
         """
         if 'pos' in kwargs:
             self.position = vec.vec(kwargs['pos'])
+
+    def in_range(self, pos) -> bool:
+        """ 判断目标在范围内. """
+        aer = util.polar(self.position, pos)
+        return self.aer_range.contains(aer)
 
     def info(self) -> str:
         if self.power_on:

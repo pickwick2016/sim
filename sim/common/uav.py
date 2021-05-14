@@ -16,6 +16,7 @@ class Uav(basic.Entity):
         sensor_position: 传感器位置.
         life: 总寿命（电池）
         current_life: 当前寿命.
+        rcs: 辐射反射面积.
     """
 
     def __init__(self, **kwargs):
@@ -32,18 +33,20 @@ class Uav(basic.Entity):
 
         self.sensor_position = None
 
-        self.life = 60.0 if 'life' not in kwargs else kwargs['life']
+        self.life = kwargs['life'] if 'life' in kwargs else 60.0
         self.current_life = self.life
-        self.rcs = 0.01
+
+        self.rcs = kwargs['rcs'] if 'rcs' in kwargs else 0.01
 
     def step(self, tt):
-        assert self.is_active()
-
         _, dt = tt
+
+        # 处理电池电量.
         self.current_life -= dt
         if self.current_life <= 0:
             self.deactive()
 
+        # 飞控/飞行.
         prev_pos = copy.copy(self.position)
         if self.is_active():
             self.controller.step(tt)
