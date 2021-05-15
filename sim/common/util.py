@@ -49,6 +49,21 @@ def check_range(rng, val) -> bool:
     return True
 
 
+def rad(d):
+    """ 角度转换为弧度. """
+    return (d % 360.0) * math.pi * 2
+
+
+def in_range_d(rng, a) -> bool:
+    """ 判断角度在规定起止范围内. """
+    rng2 = [v % (math.pi * 2) for v in rng]
+    a = a % (math.pi * 2)
+    if rng2[0] <= rng2[1]:
+        return rng2[0] <= a < rng2[1]
+    else:
+        return not (rng2[0] > a >= rng2[1])
+
+
 class AerRange:
     """ AER 范围. """
 

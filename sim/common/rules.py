@@ -20,6 +20,6 @@ def uav_access_jammer(uav_o, jammer_o):
 def radar_access_rcs(radar_o, obj):
     """ 雷达探测其他RCS属性物体. """
     if isinstance(radar_o, radar.Radar) and isinstance(obj, Entity):
-        ret = radar_o.detect(obj)
-        if ret is not None:
+        if radar_o.need_detect(obj):
+            ret = radar_o.detect(obj)
             radar_o.access_results[obj.id] = ret
