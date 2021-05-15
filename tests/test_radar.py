@@ -27,8 +27,8 @@ class TestRadar(unittest.TestCase):
         np.testing.assert_almost_equal(radar.position, vec.vec([1, 1]))
 
         radar.set_params(search_dt=2.0, track_dt=2.0)
-        self.assertAlmostEqual(radar.search_dt, 2.0)
-        self.assertAlmostEqual(radar.track_dt, 2.0)
+        self.assertAlmostEqual(radar.search_rate, 2.0)
+        self.assertAlmostEqual(radar.track_rate, 2.0)
         
 
     def test_detect(self):

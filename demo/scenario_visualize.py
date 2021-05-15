@@ -6,25 +6,32 @@ import time
 import sys
 sys.path.append('../')
 
-from sim.visualize import QtRenderView
+from sim.visualize import RenderView, QtRenderView
 from sim.common import Uav, Radar, Jammer
 from sim import Scenario
+from sim.event import StepEvent
 
+def add_uav(scene):
+    scene.add(Uav(tracks=[[0, 0], [150, 150]], speed=10.0))
+    pass
 
 def main():
     renderer = QtRenderView()
 
-    scene = Scenario(end=40)
+    scene = Scenario(end=None)
     scene.add(Jammer(pos=[-30, 30]))
-    scene.add(Radar(pos=[0, 30]))
+    radar = scene.add(Radar(pos=[0, 30]))
     scene.add(Uav(name='uav-1', tracks=[[0, 0], [150, 150]], speed=10.0))
 
     scene.step_handlers.append(lambda s: time.sleep(0.01))
     scene.step_handlers.append(lambda s: print(s.clock_info))
+    scene.step_handlers.append(StepEvent(entity=radar, evt=lambda r: print('ret:', r.current_results)))
+    scene.step_handlers.append(StepEvent(times=[10, 20, 30], evt=add_uav))
 
     scene.reset()
     while scene.step():
         renderer.render(scene)
+        
 
 
 if __name__ == '__main__':

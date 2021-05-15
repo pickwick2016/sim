@@ -37,6 +37,7 @@ class Uav(basic.Entity):
         self.current_life = self.life
 
         self.rcs = kwargs['rcs'] if 'rcs' in kwargs else 0.01
+        self.reset()
 
     def step(self, tt):
         _, dt = tt
