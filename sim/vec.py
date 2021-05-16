@@ -51,36 +51,3 @@ def proj(v1, v2):
     """ 计算v1投影到v2上的向量. """
     v2u = unit(v2)
     return v2u * np.dot(v1, v2u)
-
-
-def move_to(p0, p1, d):
-    """ 向目的地移动一定距离.
-
-    ! 将被转移至 move 模块.
-
-    :param p0: 出发位置.
-    :param p1: 目标位置.
-    :param d: 移动距离.
-    :return: [当前位置, 剩余距离]
-    """
-    d0 = dist(p0, p1)
-    left = d0 - d
-    if left > 0:
-        return p0 + d * unit(p1 - p0), left
-    return p1, left
-
-
-def move_step(p0, p1, d):
-    """ 向目的地移动一步（向量）.
-
-    ! 将被转移至 move 模块.
-    
-    :param p0: 出发位置.
-    :param p1: 目标位置.
-    :param d: 移动距离.
-    :return: [移动向量, 剩余距离]
-    """
-    d0 = dist(p0, p1)
-    step = unit(p1 - p0) * min(d0, d)
-    left = d0 - d
-    return step, left

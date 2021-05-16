@@ -3,8 +3,9 @@ import copy
 from enum import Enum
 
 from .. import basic
-from .. import vec
+from .. import move
 from . import rules
+from .. import vec
 
 
 class Uav(basic.Entity):
@@ -27,11 +28,9 @@ class Uav(basic.Entity):
 
         self.access_results = {}
         self.access_rules.append(rules.uav_access_jammer)
-        
-        self.position = 0.0
-        self.velocity = 0.0
 
-        self.sensor_position = None
+        self.position = None
+        self.velocity = None
 
         self.life = kwargs['life'] if 'life' in kwargs else 60.0
         self.current_life = self.life
@@ -57,8 +56,12 @@ class Uav(basic.Entity):
     def reset(self):
         self.controller.reset()
         self.current_life = self.life
-        self.position = self.controller.tracks[0]
-        self.velocity = vec.zeros_like(self.position)
+        if self.controller.is_available:
+            self.position = self.controller.start_point
+            self.velocity = vec.zeros_like(self.position)
+        else:
+            self.deactive()
+            self.position, self.velocity = None, None
 
     def access(self, others):
         self.access_results.clear()
@@ -82,22 +85,22 @@ class UavState(Enum):
 class UavController:
     """ 无人机飞控. """
 
-    def __init__(self, uav, **kwargs):
+    def __init__(self, uav: Uav, **kwargs):
         """ 初始化.
 
         :param tracks: 轨迹.
         :param speed: 速度值.
         """
-        self.uav = uav
+        self.uav: Uav = uav
 
-        self.tracks = list(
+        self._tracks = list(
             [vec.vec(pt) for pt in kwargs['tracks']]) if 'tracks' in kwargs else []
         self.track_no = 0
         self.speed = kwargs['speed'] if 'speed' in kwargs else 1.0
         self.two_way = kwargs['two_way'] if 'two_way' in kwargs else True
 
-        self.state = UavState.Normal
-        self.state_calls = {
+        self._state = UavState.Normal
+        self._state_handlers = {
             UavState.Normal: UavController._step_on_normal,
             UavState.Over: UavController._step_on_over,
             UavState.Back: UavController._step_on_back,
@@ -105,63 +108,53 @@ class UavController:
         }
 
     @property
-    def real_position(self):
-        return self.uav.position
+    def start_point(self):
+        """ 获取出发点. """
+        return copy.copy(self._tracks[0]) if self.is_available else None
 
     @property
-    def sensor_position(self):
-        return self.uav.position if self.uav.sensor_position is None else self.uav.sensor_position
+    def is_available(self) -> bool:
+        return len(self._tracks) >= 2
 
     def reset(self):
-        self.state = UavState.Normal
+        self._state = UavState.Normal
         self.track_no = 0
 
     def step(self, tt):
-        if len(self.tracks) <= 0:
-            self.uav.deactive()
-            return
-
-        if self.state in self.state_calls:
-            self.state_calls[self.state](self, tt)
+        if self._state in self._state_handlers:
+            self._state_handlers[self._state](self, tt)
 
     def take(self, acts):
         if 'jam' in acts:
-            if self.state == UavState.Normal:
-                self.state = UavState.Back
+            if self._state == UavState.Normal:
+                self._state = UavState.Back
         else:
-            if self.state == UavState.Back and self.track_no < len(self.tracks):
-                self.state = UavState.Normal
+            if self._state == UavState.Back and self.track_no < len(self._tracks):
+                self._state = UavState.Normal
 
     def _step_on_normal(self, tt):
         _, dt = tt
-        if self.track_no == 0:
-            self.uav.position = self.tracks[0]
-            self.uav.velocity = vec.zeros_like(self.uav.position)
-            self.track_no = 1
+        if self.track_no >= len(self._tracks):
+            # 跑完所有航点.
+            self._state = UavState.Back if self.two_way else UavState.Over
         else:
-            if self.track_no < len(self.tracks):
-                step, left = vec.move_step(
-                    self.sensor_position, self.tracks[self.track_no], dt * self.speed)
-                # pos, left = vec.move_to(self.uav.position, self.tracks[self.track_no], dt * self.speed)
-                if left <= 0:
-                    self.track_no += 1
-                self.uav.position = self.uav.position + step
-            else:
-                if self.two_way:
-                    self.state = UavState.Back
-                else:
-                    self.state = UavState.Over
+            # 跑完所有航点.
+            step, left = move.step_v(
+                self.uav.position, self._tracks[self.track_no], dt * self.speed)
+            self.uav.position += step
+            if left <= 0.0:
+                self.track_no += 1
 
     def _step_on_over(self, tt):
         self.uav.deactive()
 
     def _step_on_back(self, tt):
         _, dt = tt
-        step, left = vec.move_step(
-            self.sensor_position, self.tracks[0], dt * self.speed)
-        self.uav.position = self.uav.position + step
-        if left <= 0:
-            self.state = UavState.Home
+        step, left = move.step_v(
+            self.uav.position, self._tracks[0], dt * self.speed)
+        self.uav.position += step
+        if left <= 0.0:
+            self._state = UavState.Home
 
     def _step_on_home(self, tt):
         self.uav.deactive()
