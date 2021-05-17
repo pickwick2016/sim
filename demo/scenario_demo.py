@@ -10,7 +10,7 @@ sys.path.append('../')
 from sim import Scenario
 from sim.common import Uav, Jammer
 from sim.event import StepEvent
-from sim.visualize import QtRenderView, RenderView
+from sim import visualize
 
 
 def print_scene(scene):
@@ -28,7 +28,7 @@ def switch_jammer(jammer):
 
 
 def main():
-    renderer = QtRenderView()
+    renderer = visualize.make_view(typename='qt', win_size=(1000, 600))
 
     scene = Scenario(end=20)
     scene.step_handlers.append(print_scene)

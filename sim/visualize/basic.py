@@ -5,6 +5,18 @@
 """
 
 
+class RenderView:
+    """ 渲染窗口. """
+
+    def __init__(self, **kwargs):
+        """ 初始化. """
+        pass
+
+    def render(self, scene):
+        """ 渲染场景. """
+        pass
+
+
 class Painter:
     """ 绘制接口. """
 
@@ -32,14 +44,3 @@ class Painter:
         """ 设置画笔. """
         pass
 
-
-class RenderView:
-    """ 渲染窗口. """
-
-    def __init__(self, **kwargs):
-        """ 初始化. """
-        pass
-
-    def render(self, scene):
-        """ 渲染场景. """
-        pass

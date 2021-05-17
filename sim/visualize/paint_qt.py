@@ -15,6 +15,32 @@ from .basic import RenderView, Painter
 from .paint_scene_simple import SimplePaint
 
 
+class QtRenderView(RenderView):
+    """ 基于 QT 的显示窗口. """
+
+    def __init__(self, win_size=(800, 600), world=None, **kwargs) -> None:
+        """ 初始化.
+        
+        :param win_size: 窗口大小. (sx, sy)
+        :param world: 世界范围 (left, top, right, bottom)
+        """
+        super().__init__()
+        self.win_size = win_size
+        self.world_rect = world
+
+        self.app = QApplication(sys.argv)
+        self.win = SceneWidget(self.win_size, self.world_rect)
+        self.ui_thread = Thread(target=self.loop)
+
+    def loop(self):
+        sys.exit(self.app.exec_())
+
+    def render(self, scene):
+        self.win.scene = scene
+        self.win.update()
+        QApplication.processEvents()
+
+
 class QtPainter(Painter):
     """ QT 绘图设备. """
 
@@ -27,7 +53,7 @@ class QtPainter(Painter):
 
     def draw_line(self, p0, p1):
         self.qp.drawLine(QPointF(p0[0], p0[1]), QPointF(p1[0], p1[1]))
-        
+
     def draw_circle(self, center, radius):
         top_left = QPointF(center[0] - radius, center[1] + radius)
         bottom_right = QPointF(center[0] + radius, center[1] - radius)
@@ -41,23 +67,25 @@ class QtPainter(Painter):
         self.qp.drawRect(r)
 
     def set_pen(self, color=None, width=1):
-        pen_color = QColor(0, 0, 0) if color is None else QColor(color[0], color[1], color[2])
+        pen_color = QColor(0, 0, 0) if color is None else QColor(
+            color[0], color[1], color[2])
         pen = QPen(pen_color, width)
         self.qp.setPen(pen)
 
-        
 
 class SceneWidget(QWidget):
     """ 场景显示窗口. """
 
-    def __init__(self):
+    def __init__(self, window_size, world):
         super().__init__()
+        self.win_size = (max(window_size[0], 600), max(window_size[1], 400))
+        self.world_rect = world
         self.paint_policy = SimplePaint()
         self.scene = None
         self.initUI()
 
     def initUI(self):
-        self.resize(800, 600)
+        self.resize(self.win_size[0], self.win_size[1])
         self.setWindowTitle('sim framework')
         self.show()
 
@@ -65,14 +93,13 @@ class SceneWidget(QWidget):
         qp = QPainter()
         qp.begin(self)
         if self.scene:
-            s = self.rect().size()
-            w, h = s.width(), s.height()
-            qp.setWindow(-w / 2, h / 2, w, -h)
-
-            # trans = QTransform()
-            # trans.translate(w/2, h / 2)
-            # trans.scale(0.5, 0.5)
-            # qp.setTransform(trans)
+            if self.world_rect is None:
+                s = self.rect().size()
+                w, h = s.width(), s.height()
+                qp.setWindow(-w / 2, h / 2, w, -h)
+            else:
+                r = self.world_rect
+                qp.setWindow(r[0], r[1], r[2]-r[0], r[3]-r[1])
 
             qp2 = QtPainter(qp)
             self.drawScene(qp2)
@@ -81,21 +108,3 @@ class SceneWidget(QWidget):
     def drawScene(self, qp):
         for e in self.scene.active_entities:
             self.paint_policy.paint(qp, e)
-
-
-class QtRenderView(RenderView):
-    """ 基于 QT 的显示窗口. """
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.app = QApplication(sys.argv)
-        self.win = SceneWidget()
-        self.ui_thread = Thread(target=self.loop)
-
-    def loop(self):
-        sys.exit(self.app.exec_())
-
-    def render(self, scene):
-        self.win.scene = scene
-        self.win.update()
-        QApplication.processEvents()
