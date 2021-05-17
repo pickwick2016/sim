@@ -35,7 +35,7 @@ class TestScenario(unittest.TestCase):
         self.assertTrue(e3.id != e2.id)
         self.assertTrue(e3.name == 'ent1')
 
-        self.assertTrue(e3.is_active())
+        self.assertTrue(e3.is_active)
 
     def test_scenario_manage(self):
         """ 测试 Scenario 管理功能. """
@@ -89,31 +89,6 @@ class TestScenario(unittest.TestCase):
         self.assertAlmostEqual(time_rec[0], 0.1)
         self.assertAlmostEqual(time_rec[-1], 10.0)
 
-    def test_scenario_msg(self):
-        """ 测试场景消息. """
-        obj = Entity()
-        self.assertFalse(obj.send_msg('obj_2', 'msg'))
-
-        class MsgEntity(Entity):
-            def __init__(self, **kwargs):
-                super().__init__(**kwargs)
-                self.msg_counter = 0
-
-            def on_msg(self, sender, msg):
-                self.msg_counter += msg
-
-        scene = Scenario()
-        obj1 = scene.add(MsgEntity(name='obj_1'))
-        obj1.step_handlers.append(lambda obj: obj.send_msg('obj_2', 1))
-
-        obj2 = scene.add(MsgEntity(name='obj_2'))
-        obj2.step_handlers.append(lambda obj: obj.send_msg('obj_1', 1))
-
-        scene.run()
-
-        self.assertTrue(obj1.msg_counter >= 100)
-        self.assertTrue(obj2.msg_counter >= 100)
-
     def test_sim_clock(self):
         """ 测试仿真时钟. """
         # 测试默认构造
@@ -121,14 +96,14 @@ class TestScenario(unittest.TestCase):
         self.assertAlmostEqual(clock.start, 0.0)
         self.assertAlmostEqual(clock.end, 10.0)
         self.assertAlmostEqual(clock.dt, 0.1)
-        self.assertAlmostEqual(clock.now, 0.0)
+        self.assertAlmostEqual(clock.info()[0], 0.0)
 
         # 测试定制构造
         clock = SimClock(start=1.0, end=20.0, step=0.5)
         self.assertAlmostEqual(clock.start, 1.0)
         self.assertAlmostEqual(clock.end, 20.0)
         self.assertAlmostEqual(clock.dt, 0.5)
-        self.assertAlmostEqual(clock.now, 1.0)
+        self.assertAlmostEqual(clock.info()[0], 1.0)
 
         # 测试默认构造下方法.
         clock = SimClock()

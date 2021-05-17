@@ -111,7 +111,7 @@ class SimpleReferee:
         d = vec.dist(uav.position, jammer.position)
 
         invade = d < 20.0  # 判断是否已经入侵.
-        done = not uav.is_active() or invade
+        done = not uav.is_active or invade
 
         reward = 0.0
         if invade:
@@ -129,20 +129,19 @@ class SimpleReferee:
 
 def setup_scene(scene):
     """ （随机）初始化场景. """
-    scene.set_params(end=50.0)
     scene.add(Jammer(name='jammer', pos=[0, 0]))
     scene.add(Radar(pos=[10, 10]))
 
     d, theta = random.uniform(50, 100), random.uniform(0, math.pi * 2)
     pt = (d * math.cos(theta), d * math.sin(theta))
     speed = random.uniform(3, 5)
-    scene.add(Uav(name='target', tracks=[pt, [0, 0]], speed=speed, life=30.0))
+    scene.add(Uav(name='target', tracks=[pt, [0, 0]], speed=speed, life=60.0))
 
 
 def play_once(show=False):
     """ 玩一次. """
     agent = CmdAgent()
-    env = Environment(referee=SimpleReferee(), agent=agent, dt=.1)
+    env = Environment(referee=SimpleReferee(), agent=agent, dt=.1, end=50.0)
     setup_scene(env.scene)
 
     s = env.reset()

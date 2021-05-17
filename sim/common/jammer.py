@@ -1,12 +1,5 @@
 """ 
 干扰器.
-
-干扰器通常有以下操作：
-+ 开关干扰
-TODO: 瞄准指定方向
-TODO: 设置干扰频段
-TODO: 设置干扰功率
-TODO: 设置干扰样式
 """
 
 from .. import basic
@@ -22,20 +15,20 @@ class Jammer(basic.Entity):
         power_on: 是否开干扰.
     """
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, name='', pos=[0, 0], **kwargs):
+        """ 初始化.
+
+        :param name: 实体名称.
+        :param pos: 干扰器位置.
+        :see: AerRange.
+        """
+        super().__init__(name=name, **kwargs)
         self.aer_range = util.AerRange(**kwargs)
         self.power_on = False
-        self.position = vec.vec([0, 0])
-        self.set_params(**kwargs)
+        self.position = vec.vec(pos)
 
-    def set_params(self, **kwargs):
-        """ 设置参数.
-
-        :param pos: 位置.
-        """
-        if 'pos' in kwargs:
-            self.position = vec.vec(kwargs['pos'])
+    def reset(self):
+        self.power_on = False
 
     def in_range(self, pos) -> bool:
         """ 判断目标在范围内. """

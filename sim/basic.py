@@ -17,7 +17,9 @@ class Entity:
     Attributes:
         name: 实体名称.
         id: 实体 ID.
-        step_handlers: 步进处理列表. List[ step_handle(entity) ]
+        scene: 实体所关联的场景.
+        clock_info: 实体相关的仿真时间信息.
+        is_active: 实体是否处于活动状态.
         access_rules: 交互规则列表.
     """
 
@@ -51,10 +53,7 @@ class Entity:
     def clock_info(self) -> Tuple[float, float]:
         return self.__scene.clock_info if self.__scene else None
 
-    def attach(self, scene=None):
-        """ 关联场景. """
-        self.__scene = scene
-
+    @property
     def is_active(self) -> bool:
         """ 检查活动状态. """
         return self.__active
@@ -65,14 +64,18 @@ class Entity:
         """
         self.__active = False
 
+    def attach(self, scene=None):
+        """ 关联场景. """
+        self.__scene = scene
+
     def reset(self) -> None:
         """ 重置状态. """
         self.__active = True
 
-    def step(self, clock_info: Tuple[float, float]) -> None:
+    def step(self, clock: Tuple[float, float]) -> None:
         """ 步进.
         
-        :param clock_info: 当前时钟信息.
+        :param clock: 当前时钟信息.
         """
         pass
 
@@ -89,7 +92,7 @@ class Entity:
 class Scenario:
     """ 场景.  """
 
-    def __init__(self, **kwargs):
+    def __init__(self, start=0.0, end=10.0, step=0.1, **kwargs):
         """ 初始化. 
         
         :param start: 场景起始时间.  默认值是0s。  
@@ -97,7 +100,7 @@ class Scenario:
         :param step: 仿真步长.默认值是0.1s。  
         """
         self.__entities: List[Entity] = []
-        self.__clock = SimClock(**kwargs)
+        self.__clock = SimClock(start=start, end=end, step=step, **kwargs)
         self.step_handlers: List[Callable[[Scenario], None]] = []
 
     def set_params(self, **kwargs):
@@ -111,7 +114,7 @@ class Scenario:
     @property
     def active_entities(self) -> List[Entity]:
         """ 场景中活动实体列表. """
-        return list([e for e in self.__entities if e.is_active()])
+        return list([e for e in self.__entities if e.is_active])
 
     @property
     def clock_info(self) -> Tuple[float, float]:
@@ -200,34 +203,28 @@ class Scenario:
 class SimClock:
     """ 仿真时钟. """
 
-    def __init__(self, **kwargs):
+    def __init__(self, start=0.0, end=10.0, step=0.1, **kwargs):
         """ 初始化.
 
         :param start: 起始时间.
         :param end: 结束时间.
         :param step: 时间步进.
         """
-        self.start = 0.0
-        self.end = 10.0
-        self.dt = 0.1
-        self.now = 0.0
-        self.set_params(**kwargs)
+        self.start = start
+        self.end = end
+        self.dt = step
+        self.__now = 0.0
         self.reset()
 
-    def set_params(self, **kwargs):
-        self.start = kwargs['start'] if 'start' in kwargs else self.start
-        self.end = kwargs['end'] if 'end' in kwargs else self.end
-        self.dt = kwargs['step'] if 'step' in kwargs else self.dt
-
     def reset(self):
-        self.now = self.start
+        self.__now = self.start
 
     def step(self) -> Optional[Tuple[float, float]]:
         """ 步进.
 
         :return: (now, dt)
         """
-        self.now += self.dt
+        self.__now += self.dt
         return self.info() if not self.is_over() else None
 
     def info(self) -> Tuple[float, float]:
@@ -237,13 +234,13 @@ class SimClock:
                 now: 当前时间.
                 dt: 上一步到当前时间经过的时长. 起始时是0，后续是dt。
         """
-        return self.now, (0.0 if self.now == self.start else self.dt)
+        return self.__now, (0.0 if self.__now == self.start else self.dt)
 
     def is_over(self) -> bool:
         """ 是否结束. """
         if self.end is None:
             return False
-        return self.now > self.end
+        return self.__now > self.end
 
 
 class EntityId:

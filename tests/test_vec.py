@@ -76,32 +76,4 @@ class TestVec(unittest.TestCase):
         v1 = vec.vec([0, 0])
         v2 = vec.vec([1, 0])
         np.testing.assert_almost_equal(vec.proj(v1, v2), vec.vec([0, 0]))
-
-    def test_move(self):
-        # move_to tests
-        v0, vt = vec.vec([0, 0]), vec.vec([0, 1])
-        vn, ld = vec.move_to(v0, vt, 1)
-        self.assertAlmostEqual(ld, 0)
-        np.testing.assert_almost_equal(vn, vec.vec([0, 1]))
-
-        vn, ld = vec.move_to(v0, vt, 0.5)
-        self.assertAlmostEqual(ld, 0.5)
-        np.testing.assert_almost_equal(vn, vec.vec([0, 0.5]))
-
-        vn, ld = vec.move_to(v0, vt, 2)
-        self.assertAlmostEqual(ld, -1)
-        np.testing.assert_almost_equal(vn, vec.vec([0, 1]))
-
-        # move_step tests
-        v0, vt = vec.vec([0, 1]), vec.vec([0, 2])
-        vn, ld = vec.move_step(v0, vt, 1)
-        self.assertAlmostEqual(ld, 0)
-        np.testing.assert_almost_equal(vn, vec.vec([0, 1]))
-
-        vn, ld = vec.move_step(v0, vt, 0.5)
-        self.assertAlmostEqual(ld, 0.5)
-        np.testing.assert_almost_equal(vn, vec.vec([0, 0.5]))
-
-        vn, ld = vec.move_step(v0, vt, 2)
-        self.assertAlmostEqual(ld, -1)
-        np.testing.assert_almost_equal(vn, vec.vec([0, 1]))
+  
