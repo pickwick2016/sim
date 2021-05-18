@@ -28,6 +28,7 @@ class Jammer(basic.Entity):
         :param name: 实体名称.
         :param pos: 干扰器位置.
         :param type: 干扰器类型.
+        :param max_r: 最大干扰距离.
         :see: AerRange.
         """
         super().__init__(name=name, **kwargs)

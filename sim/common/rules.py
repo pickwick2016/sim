@@ -3,6 +3,7 @@
 """
 
 from __future__ import annotations
+from sim.common import receiver
 
 from . import jammer
 from . import uav
@@ -26,3 +27,10 @@ def radar_access_rcs(radar_o, obj):
         if radar_o.need_detect(obj):
             ret = radar_o.detect(obj)
             radar_o.access_results[obj.id] = ret
+
+
+def receiver_access_signal(recv_o, obj):
+    """ 电子侦察设备探测物体. """
+    if isinstance(recv_o, receiver.Receiver) and isinstance(obj, Entity):
+        if ret := recv_o.detect(obj):
+            recv_o.results[obj.id] = ret

@@ -41,6 +41,8 @@ class Uav(basic.Entity):
         self.position = None
         self.velocity = None
 
+        self.signal = 1
+
         self.life = life
         self.__current_life = self.life
 
