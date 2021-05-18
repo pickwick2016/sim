@@ -22,8 +22,8 @@ def main():
 
     scene = Scenario(end=30)
     scene.add(Jammer(pos=[-30, 30]))
-    radar = scene.add(Radar(pos=[0, 0], max_r=150))
-    scene.add(Uav(name='uav-1', tracks=[[150, 150], [0, 0]], speed=10.0, two_way=False))
+    radar = scene.add(Radar(pos=[0, 0], max_r=150, error_d=1, error_r=10))
+    scene.add(Uav(name='uav-1', tracks=[[150, 0], [0, 0]], speed=10.0, two_way=False))
     # scene.add(Uav(name='uav-2', tracks=[[-150, 150], [0, 0]], speed=10.0))
 
     scene.step_handlers.append(lambda s: time.sleep(0.01))

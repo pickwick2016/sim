@@ -4,7 +4,9 @@
 
 from __future__ import annotations
 from typing import Dict
+import copy
 import math
+import random
 
 from .. import basic
 from .. import vec
@@ -23,8 +25,9 @@ class Radar(basic.Entity):
         track_off: 消批时间.
     """
 
-    def __init__(self, name: str = '', pos=[0, 0], search_rate: float = 6.0, \
-            track_rate: float = 1.0, search_num: int = 3, cancel_num: int = 3, **kwargs):
+    def __init__(self, name: str = '', pos=[0, 0], search_rate: float = 6.0,
+                 track_rate: float = 1.0, search_num: int = 3, min_v=0.0,
+                 error_d=0, error_r=0, cancel_num: int = 3, checker=None, detector=None, **kwargs):
         """ 初始化.
 
         :param name: 实体名称
@@ -33,12 +36,17 @@ class Radar(basic.Entity):
         :param track_rate: 跟踪数据率
         :param search_num: 搜索次数（起批）
         :param cancel_num: 消批次数
+        :param error_d: 角度误差.
+        :param error_r: 距离误差.
+        :param min_v: 最小径向速度.
+        :param check: 判断检测.
         :see: AerRange.
         """
         super().__init__(name=name, **kwargs)
         self.access_rules.append(rules.radar_access_rcs)
 
         self.aer_range = util.AerRange(**kwargs)
+        self.aer_errors = (None, None, None)
         self.access_results = {}
 
         self.position = vec.vec(pos)
@@ -49,9 +57,17 @@ class Radar(basic.Entity):
         self.track_rate = track_rate
         self.cancel_num = cancel_num
 
+        self.error_d = error_d
+        self.error_r = error_r
+
+        self.min_v = min_v
+
         self.__current_az = 0.0
         self.__batch_id = 0
         self.__results: Dict[int, _DetectResult] = {}
+
+        self.__checker = Radar.__default_check if checker is None else checker
+        self.__detector = Radar.__default_detect if detector is None else detector
 
     def reset(self):
         self.__results.clear()
@@ -123,12 +139,49 @@ class Radar(basic.Entity):
 
     def detect(self, other):
         """ 探测目标. """
-        assert hasattr(other, 'rcs') and hasattr(other, 'position')
+        if self.__checker(self, other):
+            ret = self.__detector(self, other)
+            return ret
+        return None
+
+    def __default_check(self, other):
+        """ 默认检查器. """
+        if not hasattr(other, 'rcs') or not hasattr(other, 'position'):
+            return False
+
+        if self.min_v > 0.0 and not hasattr(other, 'velocity'):
+            return False
 
         p = util.polar(self.position, other.position)
-        if self.aer_range.contains(p):
-            return p
-        return None
+        if not self.aer_range.contains(p):
+            return False
+
+        if self.min_v > 0.0 and vec.norm(vec.proj(other.velocity, self.position - other.position)) < self.min_v:
+            return False
+        return True
+
+    def __default_detect(self, other):
+        """ 默认检测器. """
+        p = util.polar(self.position, other.position)
+
+        errors = self.__make_errors(p)
+        errors[0] = errors[0] % (math.pi * 2)
+        errors[-1] = max(0, errors[-1])
+
+        ret = vec.vec(p) + errors
+        return ret
+
+    def __make_errors(self, p):
+        """ 增加误差. """
+        errors = vec.zeros_like(p)
+        if len(errors) == 3:
+            errors[0] = 0 if (self.error_d <= 0.) else random.gauss(0, util.rad(self.error_d))
+            errors[1] = 0 if (self.error_d <= 0.) else random.gauss(0, util.rad(self.error_d))
+            errors[2] = 0 if (self.error_r <= 0.) else random.gauss(0, self.error_r)
+        elif len(errors) == 2:
+            errors[0] = 0 if (self.error_d <= 0.) else random.gauss(0, util.rad(self.error_d))
+            errors[1] = 0 if (self.error_r <= 0.) else random.gauss(0, self.error_r)
+        return errors
 
 
 class _DetectResult:

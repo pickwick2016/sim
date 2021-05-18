@@ -51,7 +51,7 @@ def check_range(rng, val) -> bool:
 
 def rad(d):
     """ 角度转换为弧度. """
-    return (d % 360.0) * math.pi * 2
+    return (d % 360.0) / 360.0 * math.pi * 2
 
 
 def in_range_d(rng, a) -> bool:
