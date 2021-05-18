@@ -14,7 +14,10 @@ def uav_access_jammer(uav_o, jammer_o):
     """ 无人机与干扰机交互. """
     if isinstance(uav_o, uav.Uav) and isinstance(jammer_o, jammer.Jammer):
         if jammer_o.power_on and jammer_o.in_range(uav_o.position):
-            uav_o.access_results['jam'] = True
+            if jammer_o.type == jammer.JammerType.DataLink:
+                uav_o.access_results['jam_dl'] = True
+            if jammer_o.type == jammer.JammerType.GPS:
+                uav_o.access_results['jam_gps'] = True
 
 
 def radar_access_rcs(radar_o, obj):

@@ -17,6 +17,7 @@ class Uav(basic.Entity):
         velocity: 当前速度.
         life: 总寿命（电池）
         rcs: 辐射反射面积.
+        start_point: 起飞点坐标.
     """
 
     def __init__(self, name:str='', tracks=[], speed:float=1.0, \
@@ -45,6 +46,11 @@ class Uav(basic.Entity):
 
         self.rcs = rcs
         self.reset()
+
+    @property
+    def start_point(self):
+        """ 起飞点坐标. """
+        return self.controller.start_point
 
     def step(self, tt):
         _, dt = tt
@@ -76,7 +82,7 @@ class Uav(basic.Entity):
         super().access(others)
         self.controller.take(self.access_results)
 
-    def info(self) -> str:
+    def __str__(self) -> str:
         if self.is_active:
             return 'uav [{}] : {} --- {}'.format(self.id, self.position, self.velocity)
         return ''
@@ -87,6 +93,7 @@ class UavState(Enum):
     Normal = 0  # 正常飞行.
     Home = 1  # 返回起飞点.
     Back = 2  # 返航.
+    GPS_LOST = 3  # GPS 丢失.
     Over = -1  # 生命结束.
 
 
@@ -133,12 +140,21 @@ class UavController:
             self._state_handlers[self._state](self, tt)
 
     def take(self, acts):
-        if 'jam' in acts:
-            if self._state == UavState.Normal:
+        if 'jam_gps' in acts:
+            if self._state != UavState.GPS_LOST:
+                self._state = UavState.GPS_LOST
+        elif 'jam_dl' in acts:
+            if self._state != UavState.Back:
                 self._state = UavState.Back
         else:
-            if self._state == UavState.Back and self._track_no < len(self._tracks):
+            # self._state = UavState.Normal
+            if self._state == UavState.Back and not self._is_track_over():
                 self._state = UavState.Normal
+            if self._state == UavState.GPS_LOST:
+                self._state = UavState.Normal
+
+    def _is_track_over(self) -> bool:
+        return self._track_no >= len(self._tracks)
 
     def _step_on_normal(self, tt):
         _, dt = tt
