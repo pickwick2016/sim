@@ -163,12 +163,11 @@ class Radar(basic.Entity):
     def __default_detect(self, other):
         """ 默认检测器. """
         p = util.polar(self.position, other.position)
-
         errors = self.__make_errors(p)
-        errors[0] = errors[0] % (math.pi * 2)
-        errors[-1] = max(0, errors[-1])
-
+        
         ret = vec.vec(p) + errors
+        ret[0] = ret[0] % (math.pi * 2)
+        ret[-1] = max(0, ret[-1])
         return ret
 
     def __make_errors(self, p):
