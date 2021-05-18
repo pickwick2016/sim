@@ -7,7 +7,7 @@ from typing import Tuple, Any, Dict, Callable, Optional
 
 from .basic import Scenario
 from .util import set_entity_attributes
-from .visualize import RenderView, QtRenderView
+from .visualize import make_view, RenderView
 
 
 class Environment:
@@ -22,18 +22,20 @@ class Environment:
 
     renderer: Optional[RenderView] = None
 
-    def __init__(self, referee=None, agent=None, dt=0.01, **kwargs):
+    def __init__(self, referee=None, agent=None, render='', need_info=False, **kwargs):
         """ 初始化.
 
         :param referee: 裁判. 用于评价场景，获取奖励.   
+        :param render: 显示类型.
+        :param need_info: 需要信息.
         :param agent: 与环境绑定的 agent. 用于场景状态编码和场景动作解码.   
-        :param dt: display interval. 0表示尽快显示. 
         """
         self.scene = Scenario(**kwargs)
-        self.referee: Callable[[Scenario], Tuple[float, bool]
-                               ] = referee if referee is not None else RlReferee()
+        self.render_type = render
+        self.referee: Callable[[Scenario], Tuple[float, bool]] \
+            = referee if referee is not None else RlReferee()
         self.agent = agent
-        self.need_info = True
+        self.need_info = need_info
         self.total_reward = 0.0
 
     def reset(self) -> Any:
@@ -59,18 +61,18 @@ class Environment:
         tt = self.scene.step()
 
         # 处理结果.
-        s_ = self.agent.encode_state(self.scene) if self.agent else self.scene
         reward, done = self.referee(self.scene)
         self.total_reward += reward
-
         done = done or (tt is None)
+        b_next = self.agent and not done
+        s_next = self.agent.encode_state(self.scene) if b_next else self.scene
         info = self._info() if self.need_info else ''
-        return s_, reward, done, info
+        return s_next, reward, done, info
 
     def render(self):
         """ 显示. """
         if Environment.renderer is None:
-            Environment.renderer = QtRenderView()
+            Environment.renderer = make_view(self.render_type)
         if Environment.renderer:
             Environment.renderer.render(self.scene)
 
@@ -81,19 +83,6 @@ class Environment:
             if s := str(e):
                 infos.append(s)
         return '\n  '.join(infos)
-
-
-class RlReferee:
-    """ 强化学习裁判. """
-
-    def __call__(self, scene) -> Tuple[float, bool]:
-        """ 根据场景计算奖励.
-
-        :param scene: 场景.
-        :return: (reward, done).
-        """
-        reward, done = 0.0, False
-        return reward, done
 
 
 class RlAgent:
@@ -110,3 +99,19 @@ class RlAgent:
     def decide(self, s) -> Any:
         """ 根据状态做出决策. """
         return {}
+
+
+class RlReferee:
+    """ 强化学习裁判. 
+    
+    也可以以函数方式实现.
+    """
+
+    def __call__(self, scene) -> Tuple[float, bool]:
+        """ 根据场景计算奖励.
+
+        :param scene: 场景.
+        :return: (reward, done).
+        """
+        reward, done = 0.0, False
+        return reward, done

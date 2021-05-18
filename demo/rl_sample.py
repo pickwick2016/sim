@@ -5,19 +5,20 @@
 
 import math
 import random
-from typing import Tuple
-
+from typing import Tuple, Any, Dict
 
 import sys
 sys.path.append('../')
 
-from sim import vec
-from sim.common import Uav, Jammer, Radar
 from sim.rl import Environment, RlReferee
+from sim.common import Uav, Jammer, Radar
+from sim import vec
+
 
 ##############################################################################
 # 决策代理
 ##############################################################################
+
 
 class CmdAgent:
     """ 简单指控代理. """
@@ -26,13 +27,13 @@ class CmdAgent:
         self.range_0 = 21.0
         self.range_1 = 30.0
 
-    def encode_state(self, scene):
+    def encode_state(self, scene) -> Any:
         """ 把场景翻译为输入."""
         jammer, uav = scene.find('jammer'), scene.find('target')
         s = vec.dist(uav.position, jammer.position)
         return s
 
-    def decode_action(self, act_val):
+    def decode_action(self, act_val) -> Dict:
         """ 把输出翻译为动作. """
         actions = {}
         if act_val == 1:
@@ -41,15 +42,17 @@ class CmdAgent:
             actions['jammer.power_on'] = False
         return actions
 
-    def decide(self, s):
+    def decide(self, state) -> Any:
         """ 根据状态（距离），产生决策.
 
         :return: 1表示power_on；-1表示power_off；0表示维持原状.
         """
+        if state is None:
+            return None
         output = 0
-        if s < self.range_0:
+        if state < self.range_0:
             output = 1
-        if s > self.range_1:
+        if state > self.range_1:
             output = -1
         return output
 
@@ -97,30 +100,27 @@ class DqnAgent:
 # 裁判
 ##############################################################################
 
-class SimpleReferee:
-    """ 简单裁判. """
+def simple_ref(scene) -> Tuple[float, bool]:
+    """ 计算奖励值（reward, done）
 
-    def __call__(self, scene) -> Tuple[float, bool]:
-        """ 计算奖励值（reward, done）
+    :return:
+        reward 奖励值.  入侵=-1000， 其他=0
+        done 入侵或飞机消失，可以结束.
+    """
+    jammer, uav = scene.find('jammer'), scene.find('target')
+    if uav is None or not uav.is_active:
+        return 0, True
 
-        :return:
-            reward 奖励值.  入侵=-1000， 其他=0
-            done 入侵或飞机消失，可以结束.
-        """
-        jammer, uav = scene.find('jammer'), scene.find('target')
-        d = vec.dist(uav.position, jammer.position)
+    d = vec.dist(uav.position, jammer.position)
+    invade = d < 20.0  # 判断是否已经入侵.
 
-        invade = d < 20.0  # 判断是否已经入侵.
-        done = not uav.is_active or invade
-
-        reward = 0.0
-        if invade:
-            reward -= 1000.0
-        if jammer.power_on:
-            reward -= 1.0
-        reward = max(-1000., reward)
-
-        return reward, done
+    reward = 0.0
+    if invade:
+        reward -= 1000.0
+    if jammer.power_on:
+        reward -= 1.0
+    reward = max(-1000., reward)
+    return reward, invade
 
 
 ##############################################################################
@@ -135,13 +135,13 @@ def setup_scene(scene):
     d, theta = random.uniform(50, 100), random.uniform(0, math.pi * 2)
     pt = (d * math.cos(theta), d * math.sin(theta))
     speed = random.uniform(3, 5)
-    scene.add(Uav(name='target', tracks=[pt, [0, 0]], speed=speed, life=60.0))
+    scene.add(Uav(name='target', tracks=[pt, [0, 0]], speed=speed, life=30.0))
 
 
 def play_once(show=False):
     """ 玩一次. """
     agent = CmdAgent()
-    env = Environment(referee=SimpleReferee(), agent=agent, dt=.1, end=50.0)
+    env = Environment(referee=simple_ref, agent=agent, render='qt', end=None)
     setup_scene(env.scene)
 
     s = env.reset()
@@ -149,17 +149,17 @@ def play_once(show=False):
         if show:
             env.render()
         a = agent.decide(s)
-        s_, r, done, info = env.step(a)
+        s_, r, done, _ = env.step(a)
         if done:
             break
         s = s_
     return env.total_reward
 
 
-def play(rounds=15):
+def play(rounds=15, show=True):
     total_rewards = []
     for i in range(rounds):
-        r = play_once(show=True)
+        r = play_once(show=show)
         print('episode [{0}] : total reward = {1}'.format(str(i + 1), r))
         total_rewards.append(r)
     print('avg reward = {}'.format(sum(total_rewards) / len(total_rewards)))
