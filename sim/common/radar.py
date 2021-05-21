@@ -17,6 +17,15 @@ from . import rules
 class Radar(basic.Entity):
     """ 雷达.
 
+    可以探测作用范围内以下实体：
+    * 具有属性：rcs
+    * 具有属性：position
+
+    探测结果：
+    * 目标极坐标
+    * 时间
+    * 批号
+
     Attributes:
         position: 位置.
         results: 探测结果.

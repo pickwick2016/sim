@@ -21,7 +21,14 @@ class EoState(Enum):
 
 
 class EoDetector(detector.Detector):
-    """ 光电探测设备. """
+    """ 光电探测设备. 
+    
+    可以探测作用范围内以下实体：
+    * 具有属性：position
+
+    探测结果：
+    * 目标方位
+    """
 
     def __init__(self, name: str = '', pos=(0, 0), fov=1.0, error=0.0, **kwargs):
         """ 初始化.
