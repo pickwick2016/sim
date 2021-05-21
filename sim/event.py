@@ -61,7 +61,7 @@ class StepEvent:
             return True
 
         now, dt = obj.clock_info
-        if isinstance(self.times, float):
+        if isinstance(self.times, (float, int)):
             if abs(now - self.times) <= 0.1 * dt:
                 return True
         elif isinstance(self.times, collections.Iterable):

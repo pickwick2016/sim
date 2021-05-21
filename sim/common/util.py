@@ -95,7 +95,7 @@ def angle(a1: float, a2: float, unit='d') -> float:
         da = abs(a1 % 360 - a2 % 360)
         return da if da <= 180 else (360 - da)
     elif unit == 'r' or unit == 'rad':
-        return angle(rad(a1), rad(a2))
+        return angle(deg(a1), deg(a2), unit='d')
     else:
         raise Exception('error')
 

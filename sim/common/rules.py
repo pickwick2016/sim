@@ -11,6 +11,7 @@ from . import radar
 from sim import Entity
 
 
+
 def uav_access_jammer(uav_o, jammer_o):
     """ 无人机与干扰机交互. """
     if isinstance(uav_o, uav.Uav) and isinstance(jammer_o, jammer.Jammer):
@@ -34,3 +35,13 @@ def receiver_access_signal(recv_o, obj):
     if isinstance(recv_o, receiver.Receiver) and isinstance(obj, Entity):
         if ret := recv_o.detect(obj):
             recv_o.results[obj.id] = ret
+
+
+
+
+# def access_detect_results(obj, target):
+#     """ 检测结果.
+#     """
+#     assert hasattr(obj, '_results') and hasattr(obj, 'detect')
+#     if ret := obj.detect(target):
+#         obj._results[target.id] = ret

@@ -3,15 +3,16 @@
 """
 
 from __future__ import annotations
-from typing import List, Any, Optional
+from typing import List, Any, Optional, overload
 
 from .. import basic
 from .. import vec
 from . import util
 from . import rules
+from . import detector
 
 
-class Receiver(basic.Entity):
+class Receiver(detector.Detector):
     """ 接收机. """
 
     def __init__(self, name: str = '', pos=[0, 0], **kwargs):
@@ -22,19 +23,8 @@ class Receiver(basic.Entity):
         :see: AerRange.
         """
         super().__init__(name=name, **kwargs)
-        self.access_rules.append(rules.receiver_access_signal)
-
         self.aer_range = util.AerRange(**kwargs)
-
         self.position = vec.vec(pos)
-        self.results = {}
-
-    def reset(self):
-        self.results.clear()
-
-    def access(self, others: List[basic.Entity]) -> None:
-        self.results.clear()
-        super().access(others)
 
     def detect(self, other) -> Optional[Any]:
         """ 检测目标.  """
@@ -42,6 +32,7 @@ class Receiver(basic.Entity):
             aer = util.polar(self.position, other.position)
             if self.aer_range.contains(aer):
                 return aer[0]
+        return None
 
     def __str__(self) -> str:
         if self.results:
