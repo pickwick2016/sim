@@ -13,7 +13,8 @@ from . import rules
 
 class Receiver(basic.Entity):
     """ 接收机. """
-    def __init__(self, name: str, pos=[0, 0], **kwargs):
+
+    def __init__(self, name: str = '', pos=[0, 0], **kwargs):
         """ 初始化.
 
         :param name: 实体名称.

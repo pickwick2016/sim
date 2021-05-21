@@ -29,6 +29,7 @@ class EoDetector(basic.Entity):
         self.ae = vec.vec([0, 0])
         self.state = EoState.StandBy
         self.guide_ae = None
+        self.track_id: int = -1
 
     def step(self, clock):
         if self.state == EoState.Guide:
@@ -38,6 +39,29 @@ class EoDetector(basic.Entity):
     def access(self, others: List[basic.Entity]) -> None:
         self.results.clear()
         super().access(others)
+        self.process_results()
+
+    def guide(self, ae):
+        self.guide_ae = ae
+        self.state = EoState.StandBy
+
+    def process_results(self):
+        if self.state == EoState.Track:
+            # 判别所跟踪的结果是否在视场
+            if self.track_id in self.results:
+                self.ae = self.results[self.track_id]
+            else:
+                self.state = EoState.StandBy
+        elif self.state == EoState.Guide:
+            # 判别距离视场中心最近的目标
+            max_id = None
+            if max_id is not None:
+                self.track_id = max_id
+                self.ae = self.results[self.track_id]
+                self.state = EoState.Track
+            else:
+                self.guide_ae = None
+                self.state = EoState.StandBy
 
     def detect(self, other) -> Optional[Any]:
         """ 检测目标. """
