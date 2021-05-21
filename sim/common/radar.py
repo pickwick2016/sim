@@ -26,8 +26,8 @@ class Radar(basic.Entity):
     """
 
     def __init__(self, name: str = '', pos=[0, 0], search_rate: float = 6.0,
-                 track_rate: float = 1.0, search_num: int = 3, min_v=0.0,
-                 error_d=0, error_r=0, cancel_num: int = 3, checker=None, detector=None, **kwargs):
+                 track_rate: float = 1.0, search_num: int = 3, min_v:float=0.0,
+                 error_d:float=0, error_r:float=0, cancel_num: int = 3, checker=None, detector=None, **kwargs):
         """ 初始化.
 
         :param name: 实体名称
