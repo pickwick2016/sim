@@ -10,8 +10,9 @@ class Detector(sim.Entity):
     """ 侦察/检测设备. 
     
     通过扩展以下接口，实现探测功能：
-    1. detect：获取单次探测结果.
-    2. update_results: 在交互过后，整体更新探测结果.
+    * Detector.detect(other)：获取单次探测结果.
+    * Detector._update_results(): 在交互过后，整体更新探测结果.
+    * Detector._results: 获取当前临时处理结果，经处理后可以生成用户所需探测结果.
     """
 
     def __init__(self, name='') -> None:
