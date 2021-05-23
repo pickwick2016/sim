@@ -2,16 +2,17 @@
 向量工具模块.
 """
 
+from typing import Iterable
 import numpy as np
 import math
 
 
-def vec(v):
+def vec(v: Iterable) -> np.array:
     """ 向量化. """
     return np.array(v, dtype=np.float64)
 
 
-def zeros_like(v):
+def zeros_like(v: Iterable) -> np.array:
     """ 生成 0 向量."""
     return np.zeros_like(v)
 
@@ -39,7 +40,7 @@ def unit(v):
 def angle(v1, v2) -> float:
     """ 计算向量夹角
 
-    :return: 向量夹角的弧度值.
+    :return: 向量夹角(弧度值).
     """
     if norm(v1) > 0. and norm(v2) > 0.:
         return math.acos(np.dot(unit(v1), unit(v2)))

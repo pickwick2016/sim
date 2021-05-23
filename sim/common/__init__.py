@@ -6,3 +6,4 @@ from .uav import Uav
 from .receiver import Receiver
 from .eo import EoDetector
 from .detector import Detector
+from .aera import Area

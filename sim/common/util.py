@@ -1,7 +1,53 @@
 from typing import Any, Iterable
 import math
+import numpy as np
+
 from .. import vec
 
+
+def poly_center(polygon: Iterable) -> np.array:
+    """ 求闭合区域（多边形）中心. """
+    ret = vec.zeros_like(polygon[0])
+    for p in polygon:
+        ret = ret + p
+    ret = ret / len(p)
+    return ret
+
+
+def dist_p2poly(p, poly) -> float:
+    """ 点到区域的最近距离.
+    """
+    d1s = [vec.dist(p, pt) for pt in poly]
+
+    num = len(poly)
+    ss = [(poly[i], poly[(i + 1) % num]) for i in range(num)]
+    d2s = [dist_p2l(p, s) for s in ss]
+
+    d1, d2 = min(d1s), min(d2s)
+    return min(d1, d2)
+
+
+def dist_p2ls(p, ls) -> float:
+    """ 点到线段的距离. 
+
+    :param p: 点
+    :param ls: 线段 [p0, p1]
+    """
+    ds = [vec.dist(p, ls[0]), vec.dist(p, ls[1]), dist_p2l(p, ls)]
+    return min(ds)
+
+
+def dist_p2l(p, l) -> float:
+    """ 点到直线的距离.
+
+    :param p: 点
+    :param l: 直线 [p0, p1]
+    """
+    v0, v1 = p - l[0], l[1] - l[0]
+    a = vec.angle(v0, v1)
+    ret = abs(math.sin(a) * vec.norm(v0))
+    return ret
+    
 
 def ar(center, pos):
     """ 计算AR """
