@@ -75,4 +75,5 @@ class Receiver(detector.Detector):
         self._results.clear()
 
 
+# 侦察设备探测结果.
 ReceiverResult = namedtuple('ReceiverResult', ['time', 'value'])

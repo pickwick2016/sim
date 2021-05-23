@@ -3,10 +3,10 @@
 """
 
 from __future__ import annotations
-from typing import Dict, Optional, Any, List
-import copy
+from collections import namedtuple
 import math
 import random
+from typing import Dict, Optional, Any, List
 
 from .. import basic
 from .. import vec
@@ -45,6 +45,8 @@ class Radar(detector.Detector):
         :see: AerRange.
         """
         super().__init__(name=name, **kwargs)
+        self._accept_none = True
+
         self.aer_range = util.AerRange(**kwargs)
         self.position = vec.vec(pos)
 
@@ -58,7 +60,7 @@ class Radar(detector.Detector):
 
         self._min_v = abs(float(min_v))
 
-        self._outputs = []
+        self._outputs: Dict[int, InnerRadarResult] = {}
         self._current_az = 0.0
         self._batch_id = 0
 
@@ -78,33 +80,29 @@ class Radar(detector.Detector):
 
         返回当前结果列表，列表元素为 (batch_id, time, result, state)
         """
-        return self._outputs if self._outputs else None
-
-    def detect2(self, other) -> Optional[Any]:
-        """ 探测目标. """
-        if self._check_detect(other):
-            ret = self._do_detect(other)
-            if other.id not in self._results:
-                if ret is not None:
-                    self._batch_id += 1
-                    self._results[other.id] = RadarResult(self._batch_id)
-            if other.id in self._results:
-                now = self.clock_info[0] if self.clock_info else None
-                self._results[other.id].update(self, now, ret)
-                return self._results[other.id]
-        return None
+        if self.clock_info is None:
+            return None
+        outputs = list([RadarResult(v.batch_id, v.time, v.result, v.state)
+                        for _, v in self._outputs.items() if (v.time == self.clock_info[0] and v.result is not None)])
+        return outputs if outputs else None
 
     def _update_results(self):
         """ 更新/处理侦察结果. """
-        # 删除消批结果.
-        for k, v in self._results.copy().items():
-            if v.state == 0:
-                self._results.pop(k)
+        #
+        now, _ = self.clock_info
+        for obj_id, obj_ret in self._results.items():
+            if obj_id not in self._outputs:
+                if obj_ret is not None:
+                    self._batch_id += 1
+                    self._outputs[obj_id] = InnerRadarResult(self._batch_id)
+            if obj_id in self._outputs:
+                self._outputs[obj_id].update(self, now, obj_ret)
+        self._results.clear()
 
-        # 产生输出结果.
-        now = self.clock_info[0]
-        self._outputs = list([(v.batch_id, v.time, v.result, v.state)
-                              for _, v in self._results.items() if (v.time == now)])
+        # 删除消批结果.
+        for k, v in self._outputs.copy().items():
+            if v.state == 0:
+                self._outputs.pop(k)
 
     def need_detect(self, other) -> bool:
         """ 判断是否应该探测. 
@@ -113,17 +111,16 @@ class Radar(detector.Detector):
         """
         if not hasattr(other, 'rcs') or not hasattr(other, 'position'):
             return False
-
         if self._min_v > 0.0 and not hasattr(other, 'velocity'):
             return False
 
-        now, dt = self.clock_info if self.clock_info else (0.0, 0.1)
+        now, dt = self.clock_info
         az_rng = [self._current_az, self._current_az +
                   dt * 2 * math.pi / self._search_rate]
         aer = util.polar(self.position, other.position)
 
-        if other.id in self._results:
-            ret = self._results[other.id]
+        if other.id in self._outputs:
+            ret = self._outputs[other.id]
             if ret.state == 1:
                 # 跟踪状态下：目标进入搜索范围，间隔大于dt
                 searched = util.in_angle_range(az_rng, aer[0], unit='r')
@@ -140,13 +137,13 @@ class Radar(detector.Detector):
         """ 探测目标. """
         if not hasattr(other, 'rcs') or not hasattr(other, 'position'):
             return None
-
         aer = util.polar(self.position, other.position)
         if self.aer_range.contains(aer):
             if self._min_v > 0.0:
                 # 判断最低速度（如有必要）
                 if hasattr(other, 'velocity'):
-                    proj_v = vec.norm(vec.proj(other.velocity, self.position - other.position))
+                    proj_v = vec.norm(
+                        vec.proj(other.velocity, self.position - other.position))
                     if proj_v > self._min_v:
                         return aer
                 else:
@@ -173,7 +170,11 @@ class Radar(detector.Detector):
         return errors
 
 
-class RadarResult:
+# 雷达探测结果.
+RadarResult = namedtuple('RadarResult', ['batch_id', 'time', 'value', 'state'])
+
+
+class InnerRadarResult:
     """ 检测结果. """
 
     def __init__(self, batch_id, time=None, ret=None):
@@ -187,13 +188,13 @@ class RadarResult:
         self.time = time
         self.result = ret
         self.state = 1  # 0:消批；1:搜索；2：跟踪
-        self.__search_count = 0
+        self.__search_count = 1
         self.__missing_count = 0
 
     def update(self, radar: Radar, time, ret):
         """ 更新结果. """
         init = self.time is None
-        
+
         self.time = time
         self.result = ret
 
@@ -214,6 +215,3 @@ class RadarResult:
                         self.state = 0
                 else:
                     self.__missing_count = 0
-
-    def __str__(self) -> str:
-        return '{} {}'.format(self.time, self.result)

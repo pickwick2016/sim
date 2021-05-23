@@ -32,10 +32,9 @@ class TestRadar(unittest.TestCase):
         np.testing.assert_almost_equal(radar.position, vec.vec([10, 10]))
         self.assertTrue(radar.results is None)
 
-
     def test_detect(self):
         """ 测试检测. """
-        # 测试1
+        # 测试 1: 静止目标
         radar = Radar()
 
         uav = Target(pos=[50, 50])  # 静止目标, 无RCS
@@ -49,8 +48,8 @@ class TestRadar(unittest.TestCase):
         self.assertAlmostEqual(a, math.pi * 0.25)
         self.assertAlmostEqual(r, 50 * 2 ** 0.5)
 
-        # 测试2
-        radar = Radar(min_v=1.0)
+        # 测试 2: 限定最低探测速度 + 运动目标
+        radar = Radar(min_v=1.0)  # 限定多普勒速度
 
         uav = Target(pos=[50, 0], vel=[1.1, 0], rcs=1.0)  # 运动目标, 快速
         ret = radar.detect(uav)
@@ -68,30 +67,59 @@ class TestRadar(unittest.TestCase):
         ret = radar.detect(uav)
         self.assertTrue(ret is None)
 
-
     def test_run_1(self):
         """ 探测单目标. """
+
+        # 测试 1：运动目标
         scene = Scenario(end=30)
         radar = scene.add(Radar(pos=[0, 0]))
-        dist, vel = 150.0, 5.0
-        scene.add(Target(pos=[dist, 0], speed=[-vel, 0]))
+        scene.add(Target(pos=[150, 0], vel=[-5.0, 0], rcs=1.0))  # 测试动目标
 
         recorder = ResultRecord(radar)
         scene.step_handlers.append(recorder)
         scene.run()
 
-        self.assertTrue(len(recorder.results) > (30 - 18))
+        self.assertTrue(len(recorder.results) > 12)
 
         times = [ret[0].time for ret in recorder.results]
         times_diff = [times[i] - times[i-1] for i in range(1, len(times))]
-        self.assertTrue(times_diff[0] >= radar.search_rate and times_diff[1] >= radar.search_rate)
+        search_time = radar._search_rate - 0.15
+        self.assertTrue(
+            times_diff[0] >= search_time and times_diff[1] >= search_time)
         for v in times_diff:
-            self.assertTrue(v >= self.track_rate)
-        
+            self.assertTrue(v >= radar._track_rate)
+
         values = [ret[0].value for ret in recorder.results]
         self.assertTrue(times[-1] <= 30)
         self.assertTrue(len(set(values)) == len(values))
 
+        # 测试 2：静止目标
+        scene = Scenario(end=30)
+        radar = scene.add(Radar(pos=[0, 0]))
+        scene.add(Target(pos=[150, 0], rcs=1.0))  # 测试静止目标
 
+        recorder = ResultRecord(radar)
+        scene.step_handlers.append(recorder)
+        scene.run()
 
-        
+        self.assertTrue(len(recorder.results) > 12)
+        values = [ret[0].value for ret in recorder.results]
+        self.assertTrue(len(set(values)) == 1)
+
+        # 测试 3：运动目标 + 限定探测范围.
+        scene = Scenario(end=50)
+        radar = scene.add(Radar(pos=[0, 0], max_r=250))
+        scene.add(Target(pos=[150, 0], vel=[5.0, 0], rcs=1.0))  # 测试动目标
+
+        recorder = ResultRecord(radar)
+        scene.step_handlers.append(recorder)
+        scene.run()
+
+        self.assertTrue(len(radar._outputs) == 0)
+        self.assertTrue(len(recorder.results) >= 3)
+
+        times = [ret[0].time for ret in recorder.results]
+        values = [ret[0].value for ret in recorder.results]
+
+        self.assertTrue(times[-1] <= 20)
+        self.assertTrue(values[-1][-1] <= 250)

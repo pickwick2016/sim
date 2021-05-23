@@ -2,7 +2,8 @@
 探测器.
 """
 
-from typing import Optional, Any, List
+from typing import Optional, Any, List, Dict
+
 import sim
 
 
@@ -18,7 +19,8 @@ class Detector(sim.Entity):
     def __init__(self, name='', **kwargs) -> None:
         super().__init__(name=name, **kwargs)
         self.access_rules.append(Detector._access_detect_result)
-        self._results = {}
+        self._accept_none: bool = False  # _results 是否接收 None 探测结果.
+        self._results: Dict[int, Any] = {}
 
     def reset(self):
         super().reset()
@@ -41,13 +43,19 @@ class Detector(sim.Entity):
         """ 获取单次探测结果. """
         return None
 
+    def _clear_none_result(self):
+        """ 清理 None 探测结果."""
+        for k, v in self._results.copy().items():
+            if v is None:
+                self._results.pop(k)
+
     def _access_detect_result(self, other):
         """ 收集有效探测结果. """
         assert other.is_active
-        
+
         if self.need_detect(other):
             ret = self.detect(other)
-            if ret is not None:
+            if self._accept_none or (ret is not None):
                 self._results[other.id] = ret
 
     def _update_results(self):
