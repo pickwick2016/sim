@@ -8,7 +8,6 @@ import copy
 from enum import Enum
 from typing import List, Any, Optional
 
-from .. import basic
 from .. import vec
 from . import util
 from . import detector
@@ -67,7 +66,17 @@ class EoDetector(detector.Detector):
 
     def step(self, clock):
         self.__take_guide()
-        self._results.clear()
+
+    def guide(self, dir, update=False):
+        """ 引导. 
+
+        :param dir: 引导角度信息.
+        :param update: 是否立刻更新. 默认不立刻更新，应该在 step一步更新.
+        """
+        self._guide_dir = vec.vec(dir)
+        self._state = EoState.StandBy
+        if update:
+            self.__take_guide()
 
     def detect(self, other) -> Optional[Any]:
         """ 检测目标. """
@@ -105,17 +114,6 @@ class EoDetector(detector.Detector):
             value = tuple(value.tolist())
             self._output = EoResult(self.clock_info[0], value)
         self._results.clear()
-
-    def guide(self, dir, update=False):
-        """ 引导. 
-
-        :param dir: 引导角度信息.
-        :param update: 是否立刻更新. 默认不立刻更新，应该在 step一步更新.
-        """
-        self._guide_dir = vec.vec(dir)
-        self._state = EoState.StandBy
-        if update:
-            self.__take_guide()
 
     def __take_guide(self):
         """ 检查和接收引导信息. """
