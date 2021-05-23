@@ -3,7 +3,8 @@
 """
 
 from __future__ import annotations
-from typing import List, Any, Optional, overload
+from collections import namedtuple
+from typing import Any, Optional
 
 from .. import basic
 from .. import vec
@@ -23,16 +24,36 @@ class Receiver(detector.Detector):
     * 目标方位
     """
 
-    def __init__(self, name: str = '', pos=[0, 0], **kwargs):
+    def __init__(self, name: str = '', pos=[0, 0], rate=1.0, **kwargs):
         """ 初始化.
 
         :param name: 实体名称.
         :param pos: 位置.
+        :param rate: 更新频率.
         :see: AerRange.
         """
         super().__init__(name=name, **kwargs)
         self.aer_range = util.AerRange(**kwargs)
         self.position = vec.vec(pos)
+        self.rate = rate
+        self._outputs = {}
+
+    @property
+    def results(self) -> Optional[list]:
+        """ 获取当前探测结果. """
+        now = self.clock_info[0]
+        ret = list([v for v in self._outputs.values() if v[0] == now])
+        return ret if ret else None
+
+    def need_detect(self, other) -> bool:
+        """ 判断是否应该检测目标. """
+        if hasattr(other, 'position') and hasattr(other, 'signal'):
+            if other.id in self._outputs:
+                now = self.clock_info[0]
+                if self.rate > 0.0 and (now - self._outputs[other.id].time) < self.rate:
+                    return False
+            return True
+        return False
 
     def detect(self, other) -> Optional[Any]:
         """ 检测目标.  """
@@ -42,7 +63,16 @@ class Receiver(detector.Detector):
                 return aer[0]
         return None
 
-    def __str__(self) -> str:
-        if self.results:
-            return 'receiver [{}] : {}'.format(self.id, str(self.results))
-        return ''
+    def _update_results(self):
+        now = self.clock_info[0]
+        for k, v in self._results.items():
+            self._outputs[k] = ReceiverResult(now, v)
+
+        for k, v in self._outputs.copy().items():
+            if now - v[0] > self.rate:
+                self._outputs.pop(k)
+
+        self._results.clear()
+
+
+ReceiverResult = namedtuple('ReceiverResult', ['time', 'value'])

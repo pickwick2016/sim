@@ -45,11 +45,6 @@ class Entity:
         return self.__name
 
     @property
-    def scene(self) -> Optional[Scenario]:
-        """ 实体相关联的场景. """
-        return self.__scene
-
-    @property
     def clock_info(self) -> Tuple[float, float]:
         return self.__scene.clock_info if self.__scene else None
 

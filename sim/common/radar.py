@@ -3,7 +3,7 @@
 """
 
 from __future__ import annotations
-from typing import Dict
+from typing import Dict, Optional, Any, List
 import copy
 import math
 import random
@@ -11,32 +11,26 @@ import random
 from .. import basic
 from .. import vec
 from . import util
-from . import rules
+from . import detector
 
 
-class Radar(basic.Entity):
+class Radar(detector.Detector):
     """ 雷达.
 
     可以探测作用范围内以下实体：
     * 具有属性：rcs
     * 具有属性：position
 
-    探测结果：
-    * 目标极坐标
-    * 时间
-    * 批号
-
-    Attributes:
-        position: 位置.
-        results: 探测结果.
-        track_dt: 跟踪时间间隔(数据率).
-        search_dt: 搜索时间间隔(数据率).
-        track_off: 消批时间.
+    雷达属性:
+    * position: 雷达位置.  
+    * results: 探测结果. List[(batch_id, time, result, state)]
     """
 
-    def __init__(self, name: str = '', pos=[0, 0], search_rate: float = 6.0,
-                 track_rate: float = 1.0, search_num: int = 3, min_v:float=0.0,
-                 error_d:float=0, error_r:float=0, cancel_num: int = 3, checker=None, detector=None, **kwargs):
+    def __init__(self, name: str = '', pos=[0, 0], min_v: float = 0.0,
+                 search_rate: float = 6.0, search_num: int = 3,
+                 track_rate: float = 1.0, cancel_num: int = 3,
+                 error_d: float = 0, error_r: float = 0,
+                 checker=None, detector=None, **kwargs):
         """ 初始化.
 
         :param name: 实体名称
@@ -48,154 +42,135 @@ class Radar(basic.Entity):
         :param error_d: 角度误差.
         :param error_r: 距离误差.
         :param min_v: 最小径向速度.
-        :param check: 判断检测.
         :see: AerRange.
         """
         super().__init__(name=name, **kwargs)
-        self.access_rules.append(rules.radar_access_rcs)
-
         self.aer_range = util.AerRange(**kwargs)
-        self.aer_errors = (None, None, None)
-        self.access_results = {}
-
         self.position = vec.vec(pos)
 
-        self.search_rate = search_rate
-        self.search_num = search_num
+        self._search_rate = search_rate
+        self._search_num = search_num
+        self._track_rate = track_rate
+        self._cancel_num = cancel_num
 
-        self.track_rate = track_rate
-        self.cancel_num = cancel_num
+        self._error_d = error_d
+        self._error_r = error_r
 
-        self.error_d = error_d
-        self.error_r = error_r
+        self._min_v = min_v
 
-        self.min_v = min_v
-
-        self.__current_az = 0.0
-        self.__batch_id = 0
-        self.__results: Dict[int, _DetectResult] = {}
-
-        self.__checker = Radar.__default_check if checker is None else checker
-        self.__detector = Radar.__default_detect if detector is None else detector
+        self._outputs = []
+        self._current_az = 0.0
+        self._batch_id = 0
 
     def reset(self):
-        self.__results.clear()
-        self.__batch_id = 0
-        self.__current_az = 0.0
+        super().reset()
+        self._outputs.clear()
+        self._batch_id = 0
+        self._current_az = 0.0
 
-    def step(self, tt):
-        _, dt = tt
-        self.__current_az += dt * 2 * math.pi / self.search_rate
-
-    @property
-    def results(self):
-        return self.__results
+    def step(self, clock):
+        _, dt = clock
+        self._current_az += dt * 2 * math.pi / self._search_rate
 
     @property
-    def current_results(self):
+    def results(self) -> Optional[List]:
         """ 当前结果列表.  
 
-        元素为 (batch_id, time, result)
+        返回当前结果列表，列表元素为 (batch_id, time, result, state)
         """
-        now = self.clock_info[0]
-        ret = [(v.batch_id, v.time, v.result)
-               for _, v in self.__results.items() if (v.time == now)]
-        return list(ret)
+        return self._outputs if self._outputs else None
 
-    def access(self, others):
-        self.access_results.clear()
-        super().access(others)
-        self.__accept_access_results()
-
-    def __accept_access_results(self):
-        """ 整理交互结果. """
-        # 更新探测结果.
-        for obj_id, obj_det in self.access_results.items():
-            if obj_id not in self.__results:
-                self.__batch_id += 1
-                self.__results[obj_id] = _DetectResult(
-                    self.__batch_id, self.clock_info[0], obj_det)
-            else:
-                self.__results[obj_id].update(
-                    self, self.clock_info[0], obj_det)
-
-        # 删除消批结果.
-        remove_ids = [k for k, v in self.__results.items() if v.state == 0]
-        for rid in remove_ids:
-            self.__results.pop(rid)
-
-    def need_detect(self, other) -> bool:
-        """ 判断目标应否被探测. """
-        if not hasattr(other, 'rcs') or not hasattr(other, 'position'):
-            return False
-
-        now, dt = self.clock_info
-        az_rng = [self.__current_az - dt * 2 *
-                  math.pi / self.search_rate, self.__current_az]
-        ax = util.polar(self.position, other.position)
-        if other.id in self.__results:
-            if self.__results[other.id].state == 2:
-                # 跟踪状态.
-                if now - self.__results[other.id].time >= self.track_rate:
-                    return True
-            if self.__results[other.id].state == 1:
-                # 搜索状态.
-                if now - self.__results[other.id].time >= dt * 1.01:
-                    return util.in_range_d(az_rng, ax[0])
-        else:
-            return util.in_range_d(az_rng, ax[0])
-        return False
-
-    def detect(self, other):
+    def detect(self, other) -> Optional[Any]:
         """ 探测目标. """
-        if self.__checker(self, other):
-            ret = self.__detector(self, other)
-            return ret
+        if self._check_detect(other):
+            ret = self._do_detect(other)
+            if other.id not in self._results:
+                if ret is not None:
+                    self._batch_id += 1
+                    self._results[other.id] = _DetectResult(self._batch_id)
+            if other.id in self._results:
+                now = self.clock_info[0] if self.clock_info else None
+                self._results[other.id].update(self, now, ret)
+                return self._results[other.id]
         return None
 
-    def __default_check(self, other):
-        """ 默认检查器. """
+    def _update_results(self):
+        """ 更新/处理侦察结果. """
+        # 删除消批结果.
+        for k, v in self._results.copy().items():
+            if v.state == 0:
+                self._results.pop(k)
+
+        # 产生输出结果.
+        now = self.clock_info[0]
+        self._outputs = list([(v.batch_id, v.time, v.result, v.state)
+                              for _, v in self._results.items() if (v.time == now)])
+
+    def _check_detect(self, other) -> bool:
+        """ 判断是否应该探测. 
+
+        注意：判断是否应该探测，而不是探不探测得到.
+        """
         if not hasattr(other, 'rcs') or not hasattr(other, 'position'):
             return False
 
-        if self.min_v > 0.0 and not hasattr(other, 'velocity'):
+        if self._min_v > 0.0 and not hasattr(other, 'velocity'):
             return False
 
-        p = util.polar(self.position, other.position)
-        if not self.aer_range.contains(p):
-            return False
+        now, dt = self.clock_info if self.clock_info else (0.0, 0.1)
+        az_rng = [self._current_az, self._current_az +
+                  dt * 2 * math.pi / self._search_rate]
+        aer = util.polar(self.position, other.position)
 
-        if self.min_v > 0.0 and vec.norm(vec.proj(other.velocity, self.position - other.position)) < self.min_v:
-            return False
-        return True
+        if other.id in self._results:
+            ret = self._results[other.id]
+            if ret.state == 1:
+                # 跟踪状态下：目标进入搜索范围，间隔大于dt
+                searched = util.in_angle_range(az_rng, aer[0], unit='r')
+                return ((now - ret.time) > dt) and searched
+            elif ret.state == 2:
+                # 搜索状态下：间隔大于 track_rate.
+                return (now - ret.time) >= self._track_rate
+            else:
+                return False
+        else:
+            return util.in_angle_range(az_rng, aer[0], unit='r')
 
-    def __default_detect(self, other):
-        """ 默认检测器. """
-        p = util.polar(self.position, other.position)
-        errors = self.__make_errors(p)
-        
-        ret = vec.vec(p) + errors
-        ret[0] = ret[0] % (math.pi * 2)
-        ret[-1] = max(0, ret[-1])
-        return ret
+    def _do_detect(self, other) -> Optional[Any]:
+        """ 探测目标. """
+        aer = util.polar(self.position, other.position)
+        if self.aer_range.contains(aer):
+            if self._min_v > 0.0:
+                # 判断最低速度（如有必要）
+                proj_v = vec.norm(
+                    vec.proj(other.velocity, self.position - other.position))
+                if not hasattr(other, 'velocity') or proj_v < self._min_v:
+                    return None
+            return aer
+        return None
 
     def __make_errors(self, p):
         """ 增加误差. """
         errors = vec.zeros_like(p)
         if len(errors) == 3:
-            errors[0] = 0 if (self.error_d <= 0.) else random.gauss(0, util.rad(self.error_d))
-            errors[1] = 0 if (self.error_d <= 0.) else random.gauss(0, util.rad(self.error_d))
-            errors[2] = 0 if (self.error_r <= 0.) else random.gauss(0, self.error_r)
+            errors[0] = 0 if (self._error_d <= 0.) else random.gauss(
+                0, util.rad(self._error_d))
+            errors[1] = 0 if (self._error_d <= 0.) else random.gauss(
+                0, util.rad(self._error_d))
+            errors[2] = 0 if (self._error_r <= 0.) else random.gauss(
+                0, self._error_r)
         elif len(errors) == 2:
-            errors[0] = 0 if (self.error_d <= 0.) else random.gauss(0, util.rad(self.error_d))
-            errors[1] = 0 if (self.error_r <= 0.) else random.gauss(0, self.error_r)
+            errors[0] = 0 if (self._error_d <= 0.) else random.gauss(
+                0, util.rad(self._error_d))
+            errors[1] = 0 if (self._error_r <= 0.) else random.gauss(
+                0, self._error_r)
         return errors
 
 
 class _DetectResult:
     """ 检测结果. """
 
-    def __init__(self, batch_id, time, ret):
+    def __init__(self, batch_id, time=None, ret=None):
         """ 初始化.
 
         :param batch_id: 当前批号.
@@ -205,28 +180,34 @@ class _DetectResult:
         self.batch_id = batch_id
         self.time = time
         self.result = ret
-        self.state = 1
+        self.state = 1  # 0:消批；1:搜索；2：跟踪
         self.__search_count = 0
         self.__missing_count = 0
 
     def update(self, radar: Radar, time, ret):
         """ 更新结果. """
+        init = self.time is None
+        
         self.time = time
         self.result = ret
 
-        if self.state == 1:
-            # 处理搜索状态.
-            if ret is None:
-                self.state = 0
-            else:
-                self.__search_count += 1
-                if self.__search_count >= radar.search_num:
-                    self.state = 2
-        elif self.state == 2:
-            # 处理跟踪状态.
-            if ret is None:
-                self.__missing_count += 1
-                if self.__missing_count >= radar.cancel_num:
+        if not init:
+            if self.state == 1:
+                # 处理搜索状态.
+                if ret is None:
                     self.state = 0
-            else:
-                self.__missing_count = 0
+                else:
+                    self.__search_count += 1
+                    if self.__search_count >= radar._search_num:
+                        self.state = 2
+            elif self.state == 2:
+                # 处理跟踪状态.
+                if ret is None:
+                    self.__missing_count += 1
+                    if self.__missing_count >= radar._cancel_num:
+                        self.state = 0
+                else:
+                    self.__missing_count = 0
+
+    def __str__(self) -> str:
+        return '{} {}'.format(self.time, self.result)

@@ -1,3 +1,4 @@
+from sim.common.jammer import JammerType
 import unittest
 import numpy as np
 
@@ -14,3 +15,10 @@ class TestJammer(unittest.TestCase):
 
         jammer = Jammer(pos=[1, 1])
         np.testing.assert_almost_equal(jammer.position, vec.vec([1, 1]))
+
+    def test_operations(self):
+        jammer = Jammer()
+        self.assertTrue(not jammer.power_on)
+
+        jammer.power_on = True
+        self.assertTrue(jammer.power_on)

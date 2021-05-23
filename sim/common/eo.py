@@ -3,21 +3,15 @@
 """
 
 from __future__ import annotations
+from collections import namedtuple
 import copy
-from typing import List, Any, Optional
 from enum import Enum
+from typing import List, Any, Optional
 
 from .. import basic
 from .. import vec
 from . import util
 from . import detector
-
-
-class EoState(Enum):
-    """ 光电状态. """
-    StandBy = 0  # 待机.
-    Guide = 1  # 导引.
-    Track = 2  # 跟踪.
 
 
 class EoDetector(detector.Detector):
@@ -36,10 +30,12 @@ class EoDetector(detector.Detector):
         :param pos: 位置.
         :param fov: 视场角（度）.
         :param error: 角度误差 (度).
+        :see also: AerRange.
         """
         super().__init__(name=name, **kwargs)
-        self.position = vec.vec(pos)
         self.aer_range = util.AerRange(**kwargs)
+
+        self.position = vec.vec(pos)
         self.fov = util.rad(fov)
         self.error = util.rad(error)
 
@@ -48,20 +44,30 @@ class EoDetector(detector.Detector):
         self._guide_dir = None  # 引导角度.
         self._track_id: int = -1  # 跟踪目标 id.
 
+        self._output = None
+
     @property
     def result(self) -> Optional[Any]:
-        """ 返回当前侦察结果. """
-        if self._state == EoState.Track and self._track_id > 0:
-            return self._results[self._track_id]
-        return None
+        """ 返回探测结果. 
+        
+        :return: 返回当前探测结果 (time, ae)，如果没有，返回None.
+        """
+        return self._output
 
     @property
     def dir(self):
         """ 当前视场指向. """
         return self._dir
 
+    def reset(self) -> None:
+        super().reset()
+        self._dir = vec.vec([0, 0])  # 当前指向.
+        self._state = EoState.StandBy  # 内部状态.
+        self._output = None
+
     def step(self, clock):
         self.__take_guide()
+        self._results.clear()
 
     def detect(self, other) -> Optional[Any]:
         """ 检测目标. """
@@ -73,6 +79,7 @@ class EoDetector(detector.Detector):
 
     def _update_results(self):
         """ 处理结果. """
+        # 处理临时结果.
         if self._state == EoState.Guide:
             # 处理引导状态.
             obj_id = self.__pick_in_fov()
@@ -82,13 +89,22 @@ class EoDetector(detector.Detector):
                 self._dir = copy.copy(self._results[self._track_id])
             else:
                 self._state = EoState.StandBy
+                self._track_id = -1
         elif self._state == EoState.Track:
             # 处理跟踪状态.
             if self._track_id in self._results:
                 self._dir = copy.copy(self._results[self._track_id])
             else:
-                self._track_id = -1
                 self._state = EoState.StandBy
+                self._track_id = -1
+
+        # 生成输出结果.
+        self._output = None
+        if self._state == EoState.Track and self._track_id > 0:
+            value = self._results[self._track_id]
+            value = tuple(value.tolist())
+            self._output = EoResult(self.clock_info[0], value)
+        self._results.clear()
 
     def guide(self, dir, update=False):
         """ 引导. 
@@ -124,3 +140,13 @@ class EoDetector(detector.Detector):
             if d > self.fov:
                 return False
         return True
+
+
+class EoState(Enum):
+    """ 光电状态. """
+    StandBy = 0  # 待机.
+    Guide = 1  # 导引.
+    Track = 2  # 跟踪.
+
+
+EoResult = namedtuple('EoResult', ['time', 'value'])  # 光电探测结果.

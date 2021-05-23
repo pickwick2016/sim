@@ -95,7 +95,9 @@ def angle(a1: float, a2: float, unit='d') -> float:
         da = abs(a1 % 360 - a2 % 360)
         return da if da <= 180 else (360 - da)
     elif unit == 'r' or unit == 'rad':
-        return angle(deg(a1), deg(a2), unit='d')
+        pi2 = math.pi * 2
+        da = abs(a1 % pi2 - a2 % pi2)
+        return da if da <= math.pi else (pi2 - da)
     else:
         raise Exception('error')
 
@@ -172,3 +174,4 @@ class AerRange:
             a, e, r = aer[0], None, aer[1]
         return in_range(self.range_a, a) and in_range(self.range_e, e) \
             and in_range(self.range_r, r)
+
