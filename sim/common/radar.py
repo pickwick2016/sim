@@ -56,7 +56,7 @@ class Radar(detector.Detector):
         self._error_d = error_d
         self._error_r = error_r
 
-        self._min_v = min_v
+        self._min_v = abs(float(min_v))
 
         self._outputs = []
         self._current_az = 0.0
@@ -80,14 +80,14 @@ class Radar(detector.Detector):
         """
         return self._outputs if self._outputs else None
 
-    def detect(self, other) -> Optional[Any]:
+    def detect2(self, other) -> Optional[Any]:
         """ 探测目标. """
         if self._check_detect(other):
             ret = self._do_detect(other)
             if other.id not in self._results:
                 if ret is not None:
                     self._batch_id += 1
-                    self._results[other.id] = _DetectResult(self._batch_id)
+                    self._results[other.id] = RadarResult(self._batch_id)
             if other.id in self._results:
                 now = self.clock_info[0] if self.clock_info else None
                 self._results[other.id].update(self, now, ret)
@@ -106,7 +106,7 @@ class Radar(detector.Detector):
         self._outputs = list([(v.batch_id, v.time, v.result, v.state)
                               for _, v in self._results.items() if (v.time == now)])
 
-    def _check_detect(self, other) -> bool:
+    def need_detect(self, other) -> bool:
         """ 判断是否应该探测. 
 
         注意：判断是否应该探测，而不是探不探测得到.
@@ -136,17 +136,23 @@ class Radar(detector.Detector):
         else:
             return util.in_angle_range(az_rng, aer[0], unit='r')
 
-    def _do_detect(self, other) -> Optional[Any]:
+    def detect(self, other) -> Optional[Any]:
         """ 探测目标. """
+        if not hasattr(other, 'rcs') or not hasattr(other, 'position'):
+            return None
+
         aer = util.polar(self.position, other.position)
         if self.aer_range.contains(aer):
             if self._min_v > 0.0:
                 # 判断最低速度（如有必要）
-                proj_v = vec.norm(
-                    vec.proj(other.velocity, self.position - other.position))
-                if not hasattr(other, 'velocity') or proj_v < self._min_v:
+                if hasattr(other, 'velocity'):
+                    proj_v = vec.norm(vec.proj(other.velocity, self.position - other.position))
+                    if proj_v > self._min_v:
+                        return aer
+                else:
                     return None
-            return aer
+            else:
+                return aer
         return None
 
     def __make_errors(self, p):
@@ -167,7 +173,7 @@ class Radar(detector.Detector):
         return errors
 
 
-class _DetectResult:
+class RadarResult:
     """ 检测结果. """
 
     def __init__(self, batch_id, time=None, ret=None):

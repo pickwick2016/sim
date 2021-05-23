@@ -34,46 +34,64 @@ class TestRadar(unittest.TestCase):
 
 
     def test_detect(self):
+        """ 测试检测. """
+        # 测试1
         radar = Radar()
-        uav = Target(pos=vec.vec([50, 50]))
 
-        ret = radar._do_detect(uav)
+        uav = Target(pos=[50, 50])  # 静止目标, 无RCS
+        ret = radar.detect(uav)
+        self.assertTrue(ret is None)
+
+        uav = Target(pos=[50, 50], rcs=1.0)
+        ret = radar.detect(uav)
+        self.assertTrue(ret is not None)
         a, r = ret
         self.assertAlmostEqual(a, math.pi * 0.25)
         self.assertAlmostEqual(r, 50 * 2 ** 0.5)
 
+        # 测试2
+        radar = Radar(min_v=1.0)
+
+        uav = Target(pos=[50, 0], vel=[1.1, 0], rcs=1.0)  # 运动目标, 快速
+        ret = radar.detect(uav)
+        self.assertTrue(ret is not None)
+
+        uav = Target(pos=[50, 0], vel=[-1.1, 0], rcs=1.0)  # 运动目标, 快速
+        ret = radar.detect(uav)
+        self.assertTrue(ret is not None)
+
+        uav = Target(pos=[50, 0], vel=[0.9, 0], rcs=1.0)  # 运动目标, 慢速
+        ret = radar.detect(uav)
+        self.assertTrue(ret is None)
+
+        uav = Target(pos=[50, 0], vel=[-0.9, 0], rcs=1.0)  # 运动目标, 慢速
+        ret = radar.detect(uav)
+        self.assertTrue(ret is None)
+
 
     def test_run_1(self):
         """ 探测单目标. """
-
-        results = []
-        def append_results(e, results):
-            if e.is_active and e.results:
-                results.append(e.results)
-
-        dist, vel = 150.0, 5.0
-        tt = dist / vel
-        scene = Scenario(end=40)
-        target = scene.add(RadarTarget(pos=[dist, 0], speed=[-vel, 0]))
+        scene = Scenario(end=30)
         radar = scene.add(Radar(pos=[0, 0]))
+        dist, vel = 150.0, 5.0
+        scene.add(Target(pos=[dist, 0], speed=[-vel, 0]))
 
-        scene.step_handlers.append(StepEvent(entity=radar, evt=partial(append_results, results=results)))
+        recorder = ResultRecord(radar)
+        scene.step_handlers.append(recorder)
         scene.run()
 
-        bid_set = set()
-        time_set = set()
-        self.assertTrue(len(results) > int(tt - 18))
-        for i in range(len(results)):
-            ret = results[i][0]
-            bid_set.add(ret[0])
-            time_set.add(ret[1])
-            if i < 3:
-                self.assertTrue(ret[-1] == 1)
-            else:
-                self.assertTrue(ret[-1] == 2)
-        self.assertTrue(len(bid_set) == 1)
-        self.assertTrue(len(time_set) == len(results))
-        self.assertTrue(results[-1][0][1] <= tt)
+        self.assertTrue(len(recorder.results) > (30 - 18))
+
+        times = [ret[0].time for ret in recorder.results]
+        times_diff = [times[i] - times[i-1] for i in range(1, len(times))]
+        self.assertTrue(times_diff[0] >= radar.search_rate and times_diff[1] >= radar.search_rate)
+        for v in times_diff:
+            self.assertTrue(v >= self.track_rate)
+        
+        values = [ret[0].value for ret in recorder.results]
+        self.assertTrue(times[-1] <= 30)
+        self.assertTrue(len(set(values)) == len(values))
+
 
 
         
