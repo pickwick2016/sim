@@ -1,5 +1,13 @@
 """ 
 强化学习(RL, Reinforce Learning)环境工具.
+
+
+用户需要：
+1. 构建环境 Environment
+2. 实现裁判函数对象/函数.
+3. 实现代理（继承 RlAgent）
+
+
 """
 
 from __future__ import annotations

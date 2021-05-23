@@ -10,7 +10,7 @@ from typing import Tuple, Any, Dict
 import sys
 sys.path.append('../')
 
-from sim.rl import Environment, RlReferee
+from sim.rl import Environment
 from sim.common import Uav, Jammer, Radar
 from sim import vec
 
