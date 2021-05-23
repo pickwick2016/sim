@@ -74,6 +74,9 @@ class Receiver(detector.Detector):
 
         self._results.clear()
 
+    def __str__(self) -> str:
+        return 'receiver [{}] : {}'.format(self.id, self.results)
+
 
 # 侦察设备探测结果.
 ReceiverResult = namedtuple('ReceiverResult', ['time', 'value'])

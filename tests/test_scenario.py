@@ -1,5 +1,9 @@
-import copy
+"""
+测试基础框架.
+"""
+
 import unittest
+import copy
 
 import numpy as np
 
@@ -11,11 +15,21 @@ from sim.basic import SimClock
 class TestScenario(unittest.TestCase):
     """ 测试 Scenario 模块. """
 
-    def test_simple(self):
+    def test_clock(self):
+        """ 测试 clock """
         scene = Scenario()
-        scene.add(Entity())
-        scene.reset()
-        scene.step()
+        
+        tt = scene.clock_info
+        np.testing.assert_almost_equal(tt, [0, 0])
+        
+        tt = scene.reset()
+        np.testing.assert_almost_equal(tt, [0, 0])
+        
+        tt = scene.step()
+        np.testing.assert_almost_equal(tt, [0.1, 0.1])
+
+        tt = scene.step()
+        np.testing.assert_almost_equal(tt, [0.2, 0.1])
 
     def test_entity(self):
         """ 测试 entity. """
@@ -64,14 +78,15 @@ class TestScenario(unittest.TestCase):
         scene.remove(obj)
         self.assertEqual(len(scene.entities), 1)
 
+        self.assertTrue(scene.find('obj_1') is None)
+
         scene.clear()
         self.assertEqual(len(scene.entities), 0)
 
     def test_scenario_run(self):
         """ 测试场景运行. """
         scene = Scenario()
-        np.testing.assert_almost_equal(
-            vec.vec(scene.clock_info), vec.vec([0, 0.]))
+        np.testing.assert_almost_equal(scene.clock_info, [0, 0.])
 
         time_rec = []
 
@@ -107,21 +122,19 @@ class TestScenario(unittest.TestCase):
 
         # 测试默认构造下方法.
         clock = SimClock()
-        np.testing.assert_almost_equal(
-            vec.vec(clock.info()), vec.vec([0.0, 0.0]))
+        np.testing.assert_almost_equal(clock.info(), [0.0, 0.0])
 
         tt = clock.step()
         self.assertTrue(tt == clock.info())
-        np.testing.assert_almost_equal(
-            vec.vec(clock.info()), vec.vec([0.1, 0.1]))
-
+        np.testing.assert_almost_equal(clock.info(), [0.1, 0.1])
+        
         while True:
             tt = clock.step()
             if not tt:
                 break
+
         self.assertTrue(tt is None)
-        np.testing.assert_almost_equal(
-            vec.vec(clock.info()), vec.vec([10.1, 0.1]))
+        np.testing.assert_almost_equal(clock.info(), [10.1, 0.1])
 
     def test_multi_entity(self):
         """ 测试多实体场景. """
