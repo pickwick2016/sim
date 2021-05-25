@@ -19,7 +19,7 @@ from sim.common import Uav, Jammer, Radar
 
 class GpsAgent:
     def __init__(self):
-        self.target = vec.vec([50., 0.])
+        self.target = vec.vec3([50., 0.])
         self.pos = None
         self.vel = None
 
@@ -36,7 +36,6 @@ class GpsAgent:
 
 def setup_scene(scene):
     """ （随机）初始化场景. """
-    scene.set_params(end=50.0)
     # scene.add(Radar(pos=[10, 10]))
 
     # d, theta = random.uniform(50, 100), random.uniform(0, math.pi * 2)
@@ -49,14 +48,15 @@ def setup_scene(scene):
 
 def print_uav(uav: Uav):
     if uav and uav.is_active:
-        print(uav.position, uav.sensor_position, vec.dist(uav.velocity))
+        # print(uav.position, uav.sensor_position, vec.dist(uav.velocity))
+        pass
 
 
 def play_once():
     """ 玩一次. """
     renderer = sim.visualize.QtRenderView()
     
-    scene = Scenario()
+    scene = Scenario(end=50)
     setup_scene(scene)
     scene.step_handlers.append(StepEvent(entity='uav', evt=print_uav))
 

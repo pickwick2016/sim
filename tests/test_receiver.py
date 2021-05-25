@@ -51,8 +51,8 @@ class TestReceiver(unittest.TestCase):
 
         # 测试1.
         scene = Scenario(end=30)
-        recv = scene.add(Receiver(pos=[0, 0]))  # 默认探测器.
-        scene.add(Target(pos=[0, 5], velocity=vec.vec([1, 0]), signal=1.0))  # 运动目标
+        recv = scene.add(Receiver(pos=(0, 0)))  # 默认探测器.
+        scene.add(Target(pos=(0, 5), vel=(1, 0), signal=1.0))  # 运动目标
         recorder = ResultRecord(recv)
         scene.step_handlers.append(recorder)
         scene.run()
@@ -73,9 +73,9 @@ class TestReceiver(unittest.TestCase):
 
         # 测试2.
         scene = Scenario(end=30)
-        recv = scene.add(Receiver(pos=[0, 0], max_r=15))  # 带最大距离的探测器.
+        recv = scene.add(Receiver(pos=(0, 0), max_r=15))  # 带最大距离的探测器.
         obj = scene.add(
-            Target(pos=[5, 0], velocity=vec.vec([1, 0]), signal=1.0))
+            Target(pos=[5, 0], vel=(1, 0), signal=1.0))
         recorder = ResultRecord(recv)
         scene.step_handlers.append(recorder)
         scene.run()
@@ -93,9 +93,9 @@ class TestReceiver(unittest.TestCase):
 
         # 测试3.
         scene = Scenario(end=30)
-        recv = scene.add(Receiver(pos=[0, 0], rate=0.0))  # 无探测数据率限制的探测器.
+        recv = scene.add(Receiver(pos=(0, 0), rate=0.0))  # 无探测数据率限制的探测器.
         obj = scene.add(
-            Target(pos=[5, 0], velocity=vec.vec([1, 0]), signal=1.0))
+            Target(pos=[5, 0], vel=(1, 0), signal=1.0))
         recorder = ResultRecord(recv)
         scene.step_handlers.append(recorder)
         scene.run()
@@ -129,8 +129,8 @@ class TestReceiver(unittest.TestCase):
         scene = Scenario(end=30)
         
         recv = scene.add(Receiver(pos=[0, 0]))
-        scene.add(Target(pos=[0, 5], velocity=vec.vec([1, 0]), signal=1.0))
-        scene.add(Target(pos=[0, -10], velocity=vec.vec([1, 0]), signal=1.0))
+        scene.add(Target(pos=(0, 5), vel=(1, 0), signal=1.0))
+        scene.add(Target(pos=(0, -10), vel=(1, 0), signal=1.0))
 
         recorder = ResultRecord(recv)
         scene.step_handlers.append(recorder)

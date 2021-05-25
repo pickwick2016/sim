@@ -115,7 +115,7 @@ class UavController:
         """
         self._uav: Uav = uav
 
-        self._tracks = list([vec.vec(pt) for pt in tracks])
+        self._tracks = list([vec.vec3(pt) for pt in tracks])
         self._track_no = 0
         self.speed = speed
         self.two_way = two_way

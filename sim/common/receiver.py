@@ -34,7 +34,7 @@ class Receiver(detector.Detector):
         """
         super().__init__(name=name, **kwargs)
         self.aer_range = util.AerRange(**kwargs)
-        self.position = vec.vec(pos)
+        self.position = vec.vec3(pos)
         self.rate = rate
         self._outputs = {}
 

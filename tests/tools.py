@@ -34,8 +34,8 @@ class Target(sim.Entity):
         :param kwargs: 可以动态创建属性，配合测试.
         """
         super().__init__(name=name, **kwargs)
-        self.position = vec.vec(pos)
-        self.velocity = vec.zeros_like(self.position) if vel is None else vec.vec(vel) 
+        self.position = vec.vec3(pos)
+        self.velocity = vec.zeros_like(self.position) if vel is None else vec.vec3(vel) 
         self.life = None
         for k, v in kwargs.items():
             setattr(self, k, v)

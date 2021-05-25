@@ -37,7 +37,7 @@ class Laser(sim.Entity):
         super().__init__(name=name, **kwargs)
         self.aer_range = util.AerRange(**kwargs)
 
-        self.position = vec.vec(pos)
+        self.position = vec.vec3(pos)
         self.fov = util.rad(fov)
         self.max_work_time: float = float(work)
         self.work_time: float = self.max_work_time
@@ -45,7 +45,7 @@ class Laser(sim.Entity):
         self.power_on = False
         self.power: float = 1.0
 
-        self._dir = vec.vec([0, 0])  # 当前指向.
+        self._dir = vec.vec2([0, 0])  # 当前指向.
         self._state = LaserState.StandBy  # 内部状态.
         self._guide_dir = None  # 引导角度.
         self._track_id: int = -1  # 跟踪目标 id.
@@ -65,7 +65,7 @@ class Laser(sim.Entity):
         
     def reset(self) -> None:
         super().reset()
-        self._dir = vec.vec([0, 0])  # 当前指向.
+        self._dir = vec.vec2([0, 0])  # 当前指向.
         self._state = LaserState.StandBy  # 内部状态.
         self._output = None
         self._results = {}
@@ -96,7 +96,7 @@ class Laser(sim.Entity):
         :param dir: 引导角度信息.
         :param update: 是否立刻更新. 默认不立刻更新，应该在 step一步更新.
         """
-        self._guide_dir = vec.vec(dir)
+        self._guide_dir = vec.vec2(dir)
         self._state = LaserState.StandBy
         if update:
             self.__take_guide()
@@ -139,7 +139,7 @@ class Laser(sim.Entity):
             return None
         aer = util.polar(self.position, other.position)
         if self.aer_range.contains(aer):
-            ae = aer[0:-1]
+            ae = vec.vec2(aer)
             conds = [util.angle(ae[i], self.dir[i], 'r') < self.fov for i in range(len(ae))]
             if all(conds):
                 return ae
@@ -149,7 +149,7 @@ class Laser(sim.Entity):
         assert hasattr(other, 'position')
         aer = util.polar(self.position, other.position)
         if self.aer_range.contains(aer):
-            ae = aer[0:-1]
+            ae = vec.vec2(aer)
             conds = [util.angle(ae[i], self.dir[i], 'r') < 0.001 for i in range(len(ae))]
             return all(conds)
         return False

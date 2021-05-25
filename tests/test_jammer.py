@@ -14,7 +14,7 @@ class TestJammer(unittest.TestCase):
         self.assertTrue(jammer is not None)
 
         jammer = Jammer(pos=[1, 1])
-        np.testing.assert_almost_equal(jammer.position, vec.vec([1, 1]))
+        np.testing.assert_almost_equal(jammer.position, vec.vec3([1, 1]))
 
     def test_operations(self):
         jammer = Jammer()

@@ -3,14 +3,11 @@
 """
 
 from typing import Optional, Iterable
-import math
+
+from sim import vec, Entity
 
 
-import sim
-from sim import vec
-
-
-class Area(sim.Entity):
+class Area(Entity):
     """ 区域. """
 
     def __init__(self, name: str = '', path: Iterable = None, **kwargs):
@@ -19,7 +16,7 @@ class Area(sim.Entity):
         :param path: 区域的路径（多边形）.
         """
         super().__init__(name=name, **kwargs)
-        self._path = [] if path is None else list([vec.vec(p) for p in path])
+        self._path = [] if path is None else list([vec.vec3(p) for p in path])
 
     @property
     def path(self):

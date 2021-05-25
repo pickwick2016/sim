@@ -35,7 +35,7 @@ class Jammer(basic.Entity):
         self.aer_range = util.AerRange(**kwargs)
         self.type = type
         self.power_on = False
-        self.position = vec.vec(pos)
+        self.position = vec.vec3(pos)
 
     def reset(self):
         self.power_on = False

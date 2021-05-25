@@ -48,7 +48,7 @@ class Radar(detector.Detector):
         self._accept_none = True
 
         self.aer_range = util.AerRange(**kwargs)
-        self.position = vec.vec(pos)
+        self.position = vec.vec3(pos)
 
         self._search_rate = search_rate
         self._search_num = search_num

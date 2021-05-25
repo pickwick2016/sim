@@ -34,11 +34,11 @@ class EoDetector(detector.Detector):
         super().__init__(name=name, **kwargs)
         self.aer_range = util.AerRange(**kwargs)
 
-        self.position = vec.vec(pos)
+        self.position = vec.vec3(pos)
         self.fov = util.rad(fov)
         self.error = util.rad(error)
 
-        self._dir = vec.vec([0, 0])  # 当前指向.
+        self._dir = vec.vec2([0, 0])  # 当前指向.
         self._state = EoState.StandBy  # 内部状态.
         self._guide_dir = None  # 引导角度.
         self._track_id: int = -1  # 跟踪目标 id.
@@ -60,7 +60,7 @@ class EoDetector(detector.Detector):
 
     def reset(self) -> None:
         super().reset()
-        self._dir = vec.vec([0, 0])  # 当前指向.
+        self._dir = vec.vec2([0, 0])  # 当前指向.
         self._state = EoState.StandBy  # 内部状态.
         self._output = None
 
@@ -73,7 +73,7 @@ class EoDetector(detector.Detector):
         :param dir: 引导角度信息.
         :param update: 是否立刻更新. 默认不立刻更新，应该在 step一步更新.
         """
-        self._guide_dir = vec.vec(dir)
+        self._guide_dir = vec.vec2(dir)
         self._state = EoState.StandBy
         if update:
             self.__take_guide()
@@ -83,7 +83,7 @@ class EoDetector(detector.Detector):
         if hasattr(other, 'position'):
             aer = util.polar(self.position, other.position)
             if self.aer_range.contains(aer) and self.in_fov(other):
-                return vec.vec(aer[0:-1])
+                return vec.vec2(aer)
         return None
 
     def _update_results(self):
@@ -132,7 +132,7 @@ class EoDetector(detector.Detector):
     def in_fov(self, obj):
         """ 判断目标在视场内. """
         aer = util.polar(self.position, obj.position)
-        ae = vec.vec(aer[0:-1])
+        ae = vec.vec2(aer)
         for i in range(len(ae)):
             d = util.angle(ae[i], self._dir[i], unit='r')
             if d > self.fov:

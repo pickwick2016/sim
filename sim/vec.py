@@ -2,14 +2,33 @@
 向量工具模块.
 """
 
+from sys import implementation
 from typing import Iterable
 import numpy as np
 import math
+
+from numpy.core.fromnumeric import shape
 
 
 def vec(v: Iterable) -> np.array:
     """ 向量化. """
     return np.array(v, dtype=np.float64)
+
+
+def vec3(v: Iterable) -> np.array:
+    """ 3维向量. """
+    ret = np.zeros(shape=(3,), dtype=np.float64)
+    for i in range(min(3, len(v))):
+        ret[i] = v[i]
+    return ret
+
+
+def vec2(v: Iterable) -> np.array:
+    """ 2维向量. """
+    ret = np.zeros(shape=(2,), dtype=np.float64)
+    for i in range(min(2, len(v))):
+        ret[i] = v[i]
+    return ret
 
 
 def zeros_like(v: Iterable) -> np.array:
