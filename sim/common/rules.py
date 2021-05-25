@@ -9,7 +9,7 @@ from . import jammer
 from . import uav
 from . import radar
 from sim import Entity
-
+from sim.common import Laser
 
 
 def uav_access_jammer(uav_o, jammer_o):
@@ -36,7 +36,15 @@ def receiver_access_signal(recv_o, obj):
         if ret := recv_o.detect(obj):
             recv_o.results[obj.id] = ret
 
-
+def entity_access_laser(obj, laser: Laser):
+    """ 实体与激光交互. """
+    if isinstance(obj, Entity) and isinstance(laser, Laser):
+        if hasattr(obj, 'damage') and hasattr(obj, 'position') and laser.power_on:
+            if laser.in_dir(obj):
+                _, dt = laser.clock_info
+                obj.damage = obj.damage - dt * laser.power
+                if obj.damage <= 0.0:
+                    obj.deactive()
 
 
 # def access_detect_results(obj, target):

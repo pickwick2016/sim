@@ -46,6 +46,8 @@ class Uav(basic.Entity):
         self.life = life
         self.__current_life = self.life
 
+        self.damage = 10.0
+
         self.rcs = rcs
         self.reset()
 
@@ -60,6 +62,8 @@ class Uav(basic.Entity):
         # 处理电池电量.
         self.__current_life -= dt
         if self.__current_life <= 0:
+            self.deactive()
+        if self.damage <= 0.:
             self.deactive()
 
         # 飞控/飞行.

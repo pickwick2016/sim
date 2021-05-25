@@ -1,21 +1,23 @@
 import copy
+from sim.basic import Scenario
 
 import sim
-from sim import vec
+from sim import vec, Scenario
 
 
 class ResultRecord:
     """ 结果记录器. """
 
-    def __init__(self, obj_ref, attr='results') -> None:
+    def __init__(self, obj_ref, attr='results', active=False) -> None:
         self.ref = obj_ref
         self.results = []
         self.counter: int = 0
         self.attr: str = attr
+        self.active = active
 
-    def __call__(self, scene):
+    def __call__(self, scene: Scenario):
         self.counter += 1
-        if obj := scene.find(self.ref):
+        if obj := scene.find(self.ref, active=self.active):
             if hasattr(obj, self.attr):
                 ret = getattr(obj, self.attr)
                 if ret is not None:
