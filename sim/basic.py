@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import copy
+import time
 from typing import Optional, Tuple, List, Callable, Union
 
 
@@ -87,15 +88,16 @@ class Entity:
 class Scenario:
     """ 场景.  """
 
-    def __init__(self, start=0.0, end=10.0, step=0.1, **kwargs):
+    def __init__(self, start=0.0, end=10.0, step=0.1, mode='', **kwargs):
         """ 初始化. 
         
         :param start: 场景起始时间.  默认值是0s。  
         :param end: 仿真结束时间.  默认值是10s。  
         :param step: 仿真步长.默认值是0.1s。  
+        :param mode: 运行模式.
         """
         self.__entities: List[Entity] = []
-        self.__clock = SimClock(start=start, end=end, step=step, **kwargs)
+        self.__clock = SimClock(start=start, end=end, step=step, mode=mode, **kwargs)
         self.step_handlers: List[Callable[[Scenario], None]] = []
 
     def set_params(self, **kwargs):
@@ -198,27 +200,38 @@ class Scenario:
 class SimClock:
     """ 仿真时钟. """
 
-    def __init__(self, start=0.0, end=10.0, step=0.1, **kwargs):
+    def __init__(self, start=0.0, end=10.0, step=0.1, mode='', **kwargs):
         """ 初始化.
 
         :param start: 起始时间.
         :param end: 结束时间.
         :param step: 时间步进.
+        :param mode: 时钟模式.
         """
         self.start = start
         self.end = end
         self.dt = step
+        self.mode = mode
+        self.realtime = None
         self.__now = 0.0
         self.reset()
 
     def reset(self):
         self.__now = self.start
+        if self.mode == 'realtime':
+            self.realtime = time.time()
 
     def step(self) -> Optional[Tuple[float, float]]:
         """ 步进.
 
         :return: (now, dt)
         """
+        if self.mode == 'realtime':
+            time_used = time.time() - self.realtime
+            time_left = max(self.__now - time_used, 0.001)
+            if time_left > 0.001:
+                time.sleep(time_left)
+
         self.__now += self.dt
         return self.info() if not self.is_over() else None
 

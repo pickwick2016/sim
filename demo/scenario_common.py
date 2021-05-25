@@ -5,20 +5,22 @@
 import sys
 sys.path.append('../')
 
+import time
 
 from sim.common import Uav, Radar, Jammer
 from sim import Scenario
 
 
-def setup_scene(scene):
+def setup_scene(scene: Scenario):
     """ 初始化场景. """
     scene.add(Uav(tracks=[[0, 0], [10, 10]]))
     scene.add(Radar())
     scene.add(Jammer())
+    scene.step_handlers.append(lambda s: print(time.time()))
 
 
 def main():
-    scene = Scenario()
+    scene = Scenario(mode='realtime')
     setup_scene(scene)
     scene.run()
 
