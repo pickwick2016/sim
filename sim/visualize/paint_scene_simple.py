@@ -43,4 +43,8 @@ class SimplePaint:
         painter.draw_rect(pos, [3, 3])
 
     def paint_default(self, painter, obj):
-        pass
+        if hasattr(obj, 'position'):
+            pos = obj.position
+            color = (225, 0, 0) if hasattr(obj, 'power_on') and obj.power_on else (0, 225, 0)
+            painter.set_pen(color=color, width=2)
+            painter.draw_rect(pos, [3, 3])

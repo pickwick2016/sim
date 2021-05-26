@@ -33,8 +33,14 @@ def dist_p2ls(p, ls) -> float:
     :param p: 点
     :param ls: 线段 [p0, p1]
     """
-    ds = [vec.dist(p, ls[0]), vec.dist(p, ls[1]), dist_p2l(p, ls)]
-    return min(ds)
+    pv = vec.vec(p)
+    lv0, lv1 = vec.vec(ls[0]), vec.vec(ls[1])
+    pv2 = vec.proj(pv-lv0, lv1-lv0) + lv0
+    if vec.dist(pv2, lv0) + vec.dist(pv2, lv1) > vec.dist(lv0, lv1):
+        ds = [vec.dist(pv, lv0), vec.dist(pv, lv1)]
+        return min(ds)
+    else:
+        return dist_p2l(p, ls)
 
 
 def dist_p2l(p, l) -> float:

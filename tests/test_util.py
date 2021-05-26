@@ -144,3 +144,23 @@ class TestUtil(unittest.TestCase):
         for _ in range(10):
             a, b = random.random() * math.pi * 2, random.random() * math.pi * 2
             self.assertEqual(util.angle(a, b, unit='r'), util.angle(b, a, unit='r'))
+
+    def test_dist(self):
+        r = util.dist_p2l(vec.vec([0, 1]), [vec.vec([-2, 0]), vec.vec([-1, 0])])
+        self.assertAlmostEqual(r, 1.0)
+
+        r = util.dist_p2l(vec.vec([0, 1]), [vec.vec([-2, 0]), vec.vec([0, 0])])
+        self.assertAlmostEqual(r, 1.0)
+
+        r = util.dist_p2l(vec.vec([0, 1]), [vec.vec([-2, 0]), vec.vec([1, 0])])
+        self.assertAlmostEqual(r, 1.0)
+
+        r = util.dist_p2ls(vec.vec([0, 1]), [vec.vec([-2, 0]), vec.vec([-1, 0])])
+        self.assertAlmostEqual(r, 2.0 ** 0.5)
+        
+        r = util.dist_p2ls(vec.vec([0, 1]), [vec.vec([-2, 0]), vec.vec([0, 0])])
+        self.assertAlmostEqual(r, 1)
+
+        r = util.dist_p2ls(vec.vec([0, 1]), [vec.vec([-2, 0]), vec.vec([1, 0])])
+        self.assertAlmostEqual(r, 1)
+

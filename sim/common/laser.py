@@ -15,13 +15,24 @@ from . import util
 
 
 class Laser(sim.Entity):
-    """ 光电探测设备. 
+    """ 激光拦截设备. 
     
     可以探测作用范围内以下实体：
     * 具有属性：position
 
-    探测结果：
-    * 目标方位
+    可以打击作用范围内以下实体：
+    * 具有属性：damage
+
+    设备属性:
+    * position: 设备位置.  
+    * dir: 视场指向.
+    * power_on: 是否出光.
+    * state: 设备状态（待机、引导、锁定）
+    * result: 当前跟踪结果. (time, value). 其中，value 是方位/俯仰值.
+
+    设备操作：
+    * guide: 引导跟踪目标
+    * switch: 开关激光器.
     """
 
     def __init__(self, name: str = '', pos=(0, 0), fov=1.0, work=20.0, recover=600, power=1.0, **kwargs):
@@ -54,14 +65,28 @@ class Laser(sim.Entity):
 
     @property
     def dir(self):
+        """ 激光指向. """
         return self._dir
 
     @property
     def result(self) -> Optional[Any]:
+        """ 激光当前跟踪结果. """
         return self._output if self._track_id > 0 else None
 
-    def switch(self, on):
-        self.power_on = on
+    @property
+    def state(self) -> LaserState:
+        """ 返回当前激光状态. """
+        return self._state
+
+    def switch(self, on:Optional[bool]):
+        """ 开关激光器. 
+        
+        :param on: 设置激光器开关. None 表示转换开关状态.
+        """
+        if on is None:
+            self.power_on = not self.power_on
+        else:
+            self.power_on = on
         
     def reset(self) -> None:
         super().reset()

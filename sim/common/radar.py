@@ -8,7 +8,6 @@ import math
 import random
 from typing import Dict, Optional, Any, List
 
-from .. import basic
 from .. import vec
 from . import util
 from . import detector
@@ -21,9 +20,9 @@ class Radar(detector.Detector):
     * 具有属性：rcs
     * 具有属性：position
 
-    雷达属性:
-    * position: 雷达位置.  
-    * results: 探测结果. List[(batch_id, time, result, state)]
+    设备属性:
+    * position: 设备位置.  
+    * result: 探测结果. List[(batch_id, time, value, state)] 其中，value 是目标的方位/俯仰/距离值.
     """
 
     def __init__(self, name: str = '', pos=[0, 0], min_v: float = 0.0,
@@ -75,7 +74,7 @@ class Radar(detector.Detector):
         self._current_az += dt * 2 * math.pi / self._search_rate
 
     @property
-    def results(self) -> Optional[List]:
+    def result(self) -> Optional[List]:
         """ 当前结果列表.  
 
         返回当前结果列表，列表元素为 (batch_id, time, result, state)

@@ -5,7 +5,6 @@ from typing import List
 
 from .. import basic
 from .. import move
-from . import rules
 from .. import vec
 
 
@@ -21,7 +20,7 @@ class Uav(basic.Entity):
     """
 
     def __init__(self, name:str='', tracks=[], speed:float=1.0, \
-            two_way:bool=True, life:float=60.0, rcs:float=0.1, **kwargs):
+            two_way:bool=True, life:float=60.0, rcs:float=0.1, damage:float=10.0, **kwargs):
         """ 初始化. 
         
         :param name: 实体名称.
@@ -29,11 +28,15 @@ class Uav(basic.Entity):
         :param speed: 速度值.
         :param two_way: 双向飞行（需要返航）.
         :param life: 飞机电池寿命（飞行时长）.
+        :param damage: 可容纳损害值.
         :param rcs: 飞机 RCS.
         """
         super().__init__(name=name, **kwargs)
+
+        from . import rules
         self.access_rules.append(rules.uav_access_jammer)
-        self.access_results = {}
+        self.access_rules.append(rules.uav_access_jammer)
+        self._access_results = {}
 
         self.controller = UavController(
             uav=self, tracks=tracks, speed=speed, two_way=two_way, **kwargs)
@@ -42,17 +45,27 @@ class Uav(basic.Entity):
         self.velocity = None
 
         self.signal = 1
+        self.power_tm: float = 1.0  # 遥控信号功率
 
-        self.life = life
-        self.__current_life = self.life
+        self._life = float(life)
+        self._current_life = self._life
 
-        self.damage = 10.0
+        self._damage = float(damage)
+        self._current_damage = self._damage
 
         self.rcs = rcs
         self.reset()
 
     @property
-    def start_point(self):
+    def life(self):
+        return self._current_life
+
+    @property
+    def damage(self):
+        return self._current_damage
+
+    @property
+    def home_position(self):
         """ 起飞点坐标. """
         return self.controller.start_point
 
@@ -60,10 +73,10 @@ class Uav(basic.Entity):
         _, dt = tt
 
         # 处理电池电量.
-        self.__current_life -= dt
-        if self.__current_life <= 0:
+        self._current_life -= dt
+        if self._current_life <= 0:
             self.deactive()
-        if self.damage <= 0.:
+        if self._current_damage <= 0.:
             self.deactive()
 
         # 飞控/飞行.
@@ -75,7 +88,8 @@ class Uav(basic.Entity):
 
     def reset(self):
         self.controller.reset()
-        self.__current_life = self.life
+        self._current_life = self._life
+        self._current_damage = self._damage
         if self.controller.is_available:
             self.position = self.controller.start_point
             self.velocity = vec.zeros_like(self.position)
@@ -84,9 +98,9 @@ class Uav(basic.Entity):
             self.position, self.velocity = None, None
 
     def access(self, others):
-        self.access_results.clear()
+        self._access_results.clear()
         super().access(others)
-        self.controller.take(self.access_results)
+        self.controller.take(self._access_results)
 
     def __str__(self) -> str:
         if self.is_active:

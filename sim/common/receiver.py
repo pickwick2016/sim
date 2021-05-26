@@ -6,10 +6,8 @@ from __future__ import annotations
 from collections import namedtuple
 from typing import Any, Optional
 
-from .. import basic
 from .. import vec
 from . import util
-from . import rules
 from . import detector
 
 
@@ -20,8 +18,9 @@ class Receiver(detector.Detector):
     * 具有属性：signal
     * 具有属性：position
 
-    探测结果：
-    * 目标方位
+    设备属性:
+    * position: 设备位置.  
+    * result: 探测结果. List[(time, value)]. 其中，value 是方位角度.
     """
 
     def __init__(self, name: str = '', pos=[0, 0], rate=1.0, **kwargs):
@@ -39,7 +38,7 @@ class Receiver(detector.Detector):
         self._outputs = {}
 
     @property
-    def results(self) -> Optional[list]:
+    def result(self) -> Optional[list]:
         """ 获取当前探测结果. """
         now = self.clock_info[0]
         ret = list([v for v in self._outputs.values() if v[0] == now])
@@ -75,7 +74,7 @@ class Receiver(detector.Detector):
         self._results.clear()
 
     def __str__(self) -> str:
-        return 'receiver [{}] : {}'.format(self.id, self.results)
+        return 'receiver [{}] : {}'.format(self.id, self.result)
 
 
 # 侦察设备探测结果.

@@ -2,39 +2,41 @@
 常用交互规则.
 """
 
-from __future__ import annotations
-from sim.common import receiver
+from __future__ import annotations, absolute_import
+import math
 
-from . import jammer
-from . import uav
-from . import radar
-from sim import Entity
-from sim.common import Laser
+from sim import Entity, vec
+from sim.common import Laser, Receiver, Jammer, JammerType, Radar, Uav
 
 
-def uav_access_jammer(uav_o, jammer_o):
+def uav_access_jammer(uav: Uav, jammer: Jammer):
     """ 无人机与干扰机交互. """
-    if isinstance(uav_o, uav.Uav) and isinstance(jammer_o, jammer.Jammer):
-        if jammer_o.power_on and jammer_o.in_range(uav_o.position):
-            if jammer_o.type == jammer.JammerType.DataLink:
-                uav_o.access_results['jam_dl'] = True
-            if jammer_o.type == jammer.JammerType.GPS:
-                uav_o.access_results['jam_gps'] = True
+    if isinstance(uav, Uav) and isinstance(jammer, Jammer):
+        if jammer.power_on and jammer.in_range(uav.position):
+            if jammer.type == JammerType.DataLink:
+                d_j = vec.dist(uav.position, jammer.position)
+                d_s = vec.dist(uav.position, uav.home_position)
+                if d_j <= 0.0 or \
+                    (d_s > 0.0 and (jammer.power - 20 * math.log(d_j) > uav.power_tm - 20 * math.log(d_s))):
+                    uav._access_results['jam_dl'] = True
+            if jammer.type == JammerType.GPS:
+                uav._access_results['jam_gps'] = True
 
 
-def radar_access_rcs(radar_o, obj):
+def radar_access_rcs(radar: Radar, obj):
     """ 雷达探测其他RCS属性物体. """
-    if isinstance(radar_o, radar.Radar) and isinstance(obj, Entity):
-        if radar_o.need_detect(obj):
-            ret = radar_o.detect(obj)
-            radar_o.access_results[obj.id] = ret
+    if isinstance(radar, radar.Radar) and isinstance(obj, Entity):
+        if radar.need_detect(obj):
+            ret = radar.detect(obj)
+            radar.access_results[obj.id] = ret
 
 
-def receiver_access_signal(recv_o, obj):
+def receiver_access_signal(recv: Receiver, obj):
     """ 电子侦察设备探测物体. """
-    if isinstance(recv_o, receiver.Receiver) and isinstance(obj, Entity):
-        if ret := recv_o.detect(obj):
-            recv_o.results[obj.id] = ret
+    if isinstance(recv, receiver.Receiver) and isinstance(obj, Entity):
+        if ret := recv.detect(obj):
+            recv.result[obj.id] = ret
+
 
 def entity_access_laser(obj, laser: Laser):
     """ 实体与激光交互. """
@@ -47,9 +49,3 @@ def entity_access_laser(obj, laser: Laser):
                     obj.deactive()
 
 
-# def access_detect_results(obj, target):
-#     """ 检测结果.
-#     """
-#     assert hasattr(obj, '_results') and hasattr(obj, 'detect')
-#     if ret := obj.detect(target):
-#         obj._results[target.id] = ret

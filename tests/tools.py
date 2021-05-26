@@ -8,7 +8,7 @@ from sim import vec, Scenario
 class ResultRecord:
     """ 结果记录器. """
 
-    def __init__(self, obj_ref, attr='results', active=False) -> None:
+    def __init__(self, obj_ref, attr: str='result', active=False) -> None:
         self.ref = obj_ref
         self.results = []
         self.counter: int = 0

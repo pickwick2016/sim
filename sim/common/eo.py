@@ -6,7 +6,7 @@ from __future__ import annotations
 from collections import namedtuple
 import copy
 from enum import Enum
-from typing import List, Any, Optional
+from typing import Iterable, List, Any, Optional
 
 from .. import vec
 from . import util
@@ -19,8 +19,14 @@ class EoDetector(detector.Detector):
     可以探测作用范围内以下实体：
     * 具有属性：position
 
-    探测结果：
-    * 目标方位
+    设备属性:
+    * position: 设备位置.  
+    * dir: 视场指向.
+    * state: 设备状态（待机、引导、跟踪）
+    * result: 探测结果. List[(time, value)]. 其中，value 是方位/俯仰值.
+
+    设备操作:
+    * guide: 引导跟踪目标.
     """
 
     def __init__(self, name: str = '', pos=(0, 0), fov=1.0, error=0.0, **kwargs):
@@ -58,16 +64,12 @@ class EoDetector(detector.Detector):
         """ 当前视场指向. """
         return self._dir
 
-    def reset(self) -> None:
-        super().reset()
-        self._dir = vec.vec2([0, 0])  # 当前指向.
-        self._state = EoState.StandBy  # 内部状态.
-        self._output = None
-
-    def step(self, clock):
-        self.__take_guide()
-
-    def guide(self, dir, update=False):
+    @property
+    def state(self) -> EoState:
+        """ 当前光电状态. """
+        return self._state
+    
+    def guide(self, dir: Iterable, update=False):
         """ 引导. 
 
         :param dir: 引导角度信息.
@@ -77,6 +79,15 @@ class EoDetector(detector.Detector):
         self._state = EoState.StandBy
         if update:
             self.__take_guide()
+
+    def reset(self) -> None:
+        super().reset()
+        self._dir = vec.vec2([0, 0])  # 当前指向.
+        self._state = EoState.StandBy  # 内部状态.
+        self._output = None
+
+    def step(self, clock):
+        self.__take_guide()
 
     def detect(self, other) -> Optional[Any]:
         """ 检测目标. """

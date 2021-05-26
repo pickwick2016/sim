@@ -30,7 +30,7 @@ class TestRadar(unittest.TestCase):
         self.assertTrue(radar is not None)
         self.assertTrue(radar.name == 'radar')
         np.testing.assert_almost_equal(radar.position, vec.vec3([10, 10]))
-        self.assertTrue(radar.results is None)
+        self.assertTrue(radar.result is None)
 
     def test_detect(self):
         """ 测试检测. """
