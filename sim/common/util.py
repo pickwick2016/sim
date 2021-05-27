@@ -64,15 +64,25 @@ def ar(center, pos):
     return a, r
 
 
-def aer(center, pos):
-    """ 计算AER """
+def xyz2aer(center, pos):
+    """ xyz 坐标转换为 aer 坐标. """
     assert len(center) == 3 and len(pos) == 3
-    v = pos - center
+    v = vec.vec(pos) - vec.vec(center)
     r = vec.norm(v)
     a = math.atan2(v[0], v[1]) % (math.pi * 2)
     r2 = vec.norm(vec.vec([v[0], v[1]]))
     e = math.atan2(v[2], r2)
     return vec.vec([a, e, r])
+
+
+def aer2xyz(center, aer):
+    """ aer 坐标转换为 xyz 坐标. """
+    assert len(center) == 3 and len(aer) == 3
+    a, e, r = aer[0], aer[1], aer[2]
+    z = r * math.sin(e)
+    r2 = r * math.cos(e)
+    x, y = r2 * math.sin(a), r2 * math.cos(a)
+    return vec.vec([x, y, z]) + vec.vec(center)
 
 
 def polar(center, pos):
@@ -82,7 +92,7 @@ def polar(center, pos):
     对于3维向量，计算AER。
     """
     if len(center) == 3:
-        return aer(center, pos)
+        return xyz2aer(center, pos)
     elif len(center) == 2:
         return ar(center, pos)
     return None

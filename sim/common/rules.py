@@ -33,7 +33,7 @@ def radar_access_rcs(radar: Radar, obj):
 
 def receiver_access_signal(recv: Receiver, obj):
     """ 电子侦察设备探测物体. """
-    if isinstance(recv, receiver.Receiver) and isinstance(obj, Entity):
+    if isinstance(recv, Receiver) and isinstance(obj, Entity):
         if ret := recv.detect(obj):
             recv.result[obj.id] = ret
 

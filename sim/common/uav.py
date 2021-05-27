@@ -35,7 +35,7 @@ class Uav(basic.Entity):
 
         from . import rules
         self.access_rules.append(rules.uav_access_jammer)
-        self.access_rules.append(rules.uav_access_jammer)
+        self.access_rules.append(rules.entity_access_laser)
         self._access_results = {}
 
         self.controller = UavController(
@@ -63,6 +63,10 @@ class Uav(basic.Entity):
     @property
     def damage(self):
         return self._current_damage
+
+    @damage.setter
+    def damage(self, val):
+        self._current_damage = val
 
     @property
     def home_position(self):

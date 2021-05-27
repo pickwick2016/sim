@@ -10,7 +10,35 @@ from sim.common.util import rad
 
 
 class TestUtil(unittest.TestCase):
-    def test_aer(self):
+    def test_xyz_aer(self):
+        """ aer / xyz 坐标转换. """
+        center = vec.vec3([1, 1, 0])
+        xyz0 = vec.vec3([10, 10, 10])
+        aer = util.xyz2aer(center, xyz0)
+        xyz = util.aer2xyz(center, aer)
+        np.testing.assert_almost_equal(xyz0, xyz)
+
+        xyz0 = vec.vec3([1, 1, 10])
+        aer = util.xyz2aer(center, xyz0)
+        xyz = util.aer2xyz(center, aer)
+        np.testing.assert_almost_equal(xyz0, xyz)
+        
+        xyz0 = vec.vec3([10, 10, -10])
+        aer = util.xyz2aer(center, xyz0)
+        xyz = util.aer2xyz(center, aer)
+        np.testing.assert_almost_equal(xyz0, xyz)
+        
+        xyz0 = vec.vec3([-10, -10, 10])
+        aer = util.xyz2aer(center, xyz0)
+        xyz = util.aer2xyz(center, aer)
+        np.testing.assert_almost_equal(xyz0, xyz)
+        
+        xyz0 = vec.vec3([1, 1, 10])
+        aer = util.xyz2aer(center, xyz0)
+        xyz = util.aer2xyz(center, aer)
+        np.testing.assert_almost_equal(xyz0, xyz)
+    
+
         v0 = vec.vec([0, 0])
         v1 = vec.vec([1, 1])
         ret = util.polar(v0, v1)
