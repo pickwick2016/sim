@@ -123,7 +123,7 @@ class EoDetector(detector.Detector):
         if self._state == EoState.Track and self._track_id > 0:
             value = self._results[self._track_id]
             value = tuple(value.tolist())
-            self._output = EoResult(self.clock_info[0], value)
+            self._output = EoResult(self.clock_info[0], value, self._track_id)
         self._results.clear()
 
     def __take_guide(self):
@@ -158,4 +158,4 @@ class EoState(Enum):
     Track = 2  # 跟踪.
 
 
-EoResult = namedtuple('EoResult', ['time', 'value'])  # 光电探测结果.
+EoResult = namedtuple('EoResult', ['time', 'value', 'obj_id'])  # 光电探测结果.

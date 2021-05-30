@@ -65,7 +65,7 @@ class Receiver(detector.Detector):
     def _update_results(self):
         now = self.clock_info[0]
         for k, v in self._results.items():
-            self._outputs[k] = ReceiverResult(now, v)
+            self._outputs[k] = ReceiverResult(now, v, k)
 
         for k, v in self._outputs.copy().items():
             if now - v[0] > self.rate:
@@ -78,4 +78,4 @@ class Receiver(detector.Detector):
 
 
 # 侦察设备探测结果.
-ReceiverResult = namedtuple('ReceiverResult', ['time', 'value'])
+ReceiverResult = namedtuple('ReceiverResult', ['time', 'value', 'obj_id'])

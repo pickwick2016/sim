@@ -81,8 +81,8 @@ class Radar(detector.Detector):
         """
         if self.clock_info is None:
             return None
-        outputs = list([RadarResult(v.batch_id, v.time, v.result, v.state)
-                        for _, v in self._outputs.items() if (v.time == self.clock_info[0] and v.result is not None)])
+        outputs = list([RadarResult(v.batch_id, v.time, v.result, v.state, obj_id)
+                        for obj_id, v in self._outputs.items() if (v.time == self.clock_info[0] and v.result is not None)])
         return outputs if outputs else None
 
     def _update_results(self):
@@ -170,7 +170,7 @@ class Radar(detector.Detector):
 
 
 # 雷达探测结果.
-RadarResult = namedtuple('RadarResult', ['batch_id', 'time', 'value', 'state'])
+RadarResult = namedtuple('RadarResult', ['batch_id', 'time', 'value', 'state', 'obj_id'])
 
 
 class InnerRadarResult:

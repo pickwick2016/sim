@@ -78,7 +78,7 @@ class Laser(sim.Entity):
         """ 返回当前激光状态. """
         return self._state
 
-    def switch(self, on:Optional[bool]):
+    def switch(self, on: Optional[bool]):
         """ 开关激光器. 
         
         :param on: 设置激光器开关. None 表示转换开关状态.
@@ -87,7 +87,7 @@ class Laser(sim.Entity):
             self.power_on = not self.power_on
         else:
             self.power_on = on
-        
+
     def reset(self) -> None:
         super().reset()
         self._dir = vec.vec2([0, 0])  # 当前指向.
@@ -146,14 +146,16 @@ class Laser(sim.Entity):
                 self._track_id = list(self._results.keys())[0]
                 self._state = LaserState.Lock
                 self._dir = self._results[self._track_id]
-                self._output = LaserResult(now, self._results[self._track_id])
+                self._output = LaserResult(
+                    now, self._results[self._track_id], self._track_id)
             else:
                 self._state = LaserState.StandBy
                 self._track_id = -1
         elif self._state == LaserState.Lock:
             if self._track_id in self._results:
                 self._dir = self._results[self._track_id]
-                self._output = LaserResult(now, self._results[self._track_id])
+                self._output = LaserResult(
+                    now, self._results[self._track_id], self._track_id)
             else:
                 self._state = LaserState.StandBy
                 self._track_id = -1
@@ -165,7 +167,8 @@ class Laser(sim.Entity):
         aer = util.polar(self.position, other.position)
         if self.aer_range.contains(aer):
             ae = vec.vec2(aer)
-            conds = [util.angle(ae[i], self.dir[i], 'r') < self.fov for i in range(len(ae))]
+            conds = [util.angle(ae[i], self.dir[i], 'r') <
+                     self.fov for i in range(len(ae))]
             if all(conds):
                 return ae
         return None
@@ -175,11 +178,10 @@ class Laser(sim.Entity):
         aer = util.polar(self.position, other.position)
         if self.aer_range.contains(aer):
             ae = vec.vec2(aer)
-            conds = [util.angle(ae[i], self.dir[i], 'r') < 0.001 for i in range(len(ae))]
+            conds = [util.angle(ae[i], self.dir[i], 'r') <
+                     0.001 for i in range(len(ae))]
             return all(conds)
         return False
-
-
 
 
 class LaserState(Enum):
@@ -188,4 +190,10 @@ class LaserState(Enum):
     Guide = 1  # 导引.
     Lock = 2  # 跟踪.
 
-LaserResult = namedtuple('LaserResult', ['time', 'value'])
+
+LaserResult = namedtuple('LaserResult', ['time', 'value', 'obj_id'])
+""" 激光探测结果. 
+time: 时戳.
+value: 探测结果 A,E
+obj_id: 关联目标的 id.
+"""
