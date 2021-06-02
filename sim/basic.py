@@ -24,7 +24,7 @@ class Entity:
         access_rules: 交互规则列表.
     """
 
-    def __init__(self, name: str='', **kwargs):
+    def __init__(self, name: str = '', **kwargs):
         """ 初始化.
 
         :param name: 实体名称.        
@@ -56,6 +56,7 @@ class Entity:
 
     def deactive(self) -> None:
         """ 退出活动状态.
+
         退出活动状态后，实体将不再参与仿真.
         """
         self.__active = False

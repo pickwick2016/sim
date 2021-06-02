@@ -3,12 +3,15 @@
 """
 
 
+import os
+import sys
+sys.path.append(os.getcwd())
+
+
 import math
 import random
 from typing import Tuple, Any, Dict
 
-import sys
-sys.path.append('../')
 
 from sim.rl import Environment
 from sim.common import Uav, Jammer, Radar

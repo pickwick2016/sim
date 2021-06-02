@@ -2,13 +2,13 @@
 测试 common 对象在场景中的创建.
 """
 
+import os
 import sys
-sys.path.append('../')
+sys.path.append(os.getcwd())
 
 import time
-
-from sim.common import Uav, Radar, Jammer, Laser, Receiver, EoDetector
 from sim import Scenario
+from sim.common import Uav, Radar, Jammer, Laser, Receiver, EoDetector
 
 
 def setup_scene(scene: Scenario):

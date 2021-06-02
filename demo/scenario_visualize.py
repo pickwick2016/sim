@@ -2,14 +2,16 @@
 显示场景.
 """
 
+import os
 import sys
-sys.path.append('../')
+sys.path.append(os.getcwd())
+
+import time
 
 from sim.event import StepEvent
 from sim import Scenario
 from sim.common import Uav, Radar, Jammer
 from sim.visualize import RenderView, QtRenderView, make_view
-import time
 
 
 def add_uav(scene):
