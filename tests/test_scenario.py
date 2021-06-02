@@ -90,7 +90,7 @@ class TestScenario(unittest.TestCase):
 
         time_rec = []
 
-        scene.step_handlers.append(
+        scene.step_listeners.append(
             lambda s: time_rec.append(s.clock_info[0]))
 
         tt = scene.step()
@@ -156,7 +156,7 @@ class TestScenario(unittest.TestCase):
         times = 100
         for _ in range(obj_num):
             scene.add(CounterEntity())
-        scene.step_handlers.append(lambda s: print(s.clock_info))
+        scene.step_listeners.append(lambda s: print(s.clock_info))
         scene.reset()
         scene.run()
         self.assertEqual(len(scene.entities), obj_num)

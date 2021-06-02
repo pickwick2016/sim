@@ -32,12 +32,12 @@ def main():
     renderer = visualize.make_view(typename='qt', win_size=(1000, 600))
 
     scene = Scenario(end=60)
-    scene.step_handlers.append(print_scene)
-    scene.step_handlers.append(lambda s: time.sleep(0.01))
+    scene.step_listeners.append(print_scene)
+    scene.step_listeners.append(lambda s: time.sleep(0.01))
 
     jammer = scene.add(
         Jammer(name='jammer-1', pos=[0, 0], type=JammerType.DataLink))
-    scene.step_handlers.append(
+    scene.step_listeners.append(
         StepEvent(times=[13, 30], entity=jammer, evt=switch_jammer))
 
     receiver = scene.add(Receiver(name='recv-1', pos=[0, 0]))

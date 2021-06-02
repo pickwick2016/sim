@@ -32,16 +32,16 @@ def main():
     tracks = [(1000, 0, h), (100, 0, h)]
     uav = scene.add(Uav(tracks=tracks, life=60 * 3, speed=5))
 
-    scene.step_handlers.append(lambda s: view.render(s))
-    scene.step_handlers.append(Commander())
-    scene.step_handlers.append(lambda s: print(s.clock_info[0]))
-    scene.step_handlers.append(
+    scene.step_listeners.append(lambda s: view.render(s))
+    scene.step_listeners.append(Commander())
+    scene.step_listeners.append(lambda s: print(s.clock_info[0]))
+    scene.step_listeners.append(
         StepEvent(entity=uav, evt=lambda e: print('uav: {}'.format(e.position))))
-    scene.step_handlers.append(
+    scene.step_listeners.append(
         StepEvent(entity=jammer, evt=lambda e: print('jammer: {}'.format(e.power_on))))
-    scene.step_handlers.append(StepEvent(
+    scene.step_listeners.append(StepEvent(
         entity=eo, evt=lambda e: print('eo: {} - {}'.format(e.state, e.dir))))
-    scene.step_handlers.append(StepEvent(entity=laser, evt=lambda e: print(
+    scene.step_listeners.append(StepEvent(entity=laser, evt=lambda e: print(
         'laser: {} - {} - {}'.format(e.state, e.power_on, e.dir))))
 
     scene.run()

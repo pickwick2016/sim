@@ -45,7 +45,7 @@ class TestLaser(unittest.TestCase):
         laser = scene.add(Laser(pos=[0, 0]))  # 默认激光.
         scene.add(Target(pos=[0, 5]))
         recorder = ResultRecord(laser, attr='result')
-        scene.step_handlers.append(recorder)
+        scene.step_listeners.append(recorder)
         scene.run()
 
         self.assertTrue(len(recorder.results) == 0)  # 没有引导，没有结果.
@@ -56,7 +56,7 @@ class TestLaser(unittest.TestCase):
         scene.add(Target(pos=[5, 0]))  # 静止目标.
 
         recorder = ResultRecord(laser, attr='result')
-        scene.step_handlers.append(recorder)
+        scene.step_listeners.append(recorder)
 
         laser.guide([util.rad(90.0)])  # 有正确引导
         scene.run(reset=False)
@@ -70,7 +70,7 @@ class TestLaser(unittest.TestCase):
         laser = scene.add(Laser(pos=[0, 0]))  # 默认探测器.
         obj = scene.add(Target(pos=[0, 50], vel=[1, 0]))  # 运动目标
         recorder = ResultRecord(laser, attr='result')
-        scene.step_handlers.append(recorder)
+        scene.step_listeners.append(recorder)
 
         laser.guide([util.rad(0.0)])  # 有正确引导；立刻起效，不然会被甩开
         scene.run(reset=False)
@@ -84,7 +84,7 @@ class TestLaser(unittest.TestCase):
         laser = scene.add(Laser(pos=[0, 0]))  # 默认探测器.
         obj = scene.add(Target(pos=[0, 50], vel=[1, 0], life=10.0))  # 运动目标, 生命为10.
         recorder = ResultRecord(laser, attr='result')
-        scene.step_handlers.append(recorder)
+        scene.step_listeners.append(recorder)
 
         laser.guide([util.rad(0.0)])  # 有正确引导；立刻起效，不然会被甩开
         scene.run(reset=False)
@@ -100,12 +100,12 @@ class TestLaser(unittest.TestCase):
         # 静态开火，测试最大时间.
         scene = Scenario(end=30)
         laser = scene.add(Laser(work=10, recover=10))
-        scene.step_handlers.append(StepEvent(times=1.0, entity=laser, evt=fire))
+        scene.step_listeners.append(StepEvent(times=1.0, entity=laser, evt=fire))
 
         recorder1 = ResultRecord(laser, attr='power_on')
-        scene.step_handlers.append(recorder1)
+        scene.step_listeners.append(recorder1)
         recorder2 = ResultRecord(laser, attr='work_time')
-        scene.step_handlers.append(recorder2)
+        scene.step_listeners.append(recorder2)
 
         scene.run()
 
@@ -117,10 +117,10 @@ class TestLaser(unittest.TestCase):
         laser = scene.add(Laser(name='laser', pos=[0, 0], work=10))
         obj = scene.add(Target(name='obj', pos=[0, 100], damage=5))
         obj.access_rules.append(rules.entity_access_laser)
-        scene.step_handlers.append(StepEvent(times=1.0, entity=laser, evt=fire))
+        scene.step_listeners.append(StepEvent(times=1.0, entity=laser, evt=fire))
 
         recorder1 = ResultRecord(obj, attr='damage')
-        scene.step_handlers.append(recorder1)
+        scene.step_listeners.append(recorder1)
 
         scene.run()
 
@@ -139,10 +139,10 @@ class TestLaser(unittest.TestCase):
         obj = scene.add(Target(name='obj', pos=[0, 100], vel=[1, 0], damage=5))
         obj.access_rules.append(rules.entity_access_laser)
 
-        scene.step_handlers.append(StepEvent(times=1.0, evt=guide_and_fire))
+        scene.step_listeners.append(StepEvent(times=1.0, evt=guide_and_fire))
 
         recorder1 = ResultRecord(obj, attr='damage')
-        scene.step_handlers.append(recorder1)
+        scene.step_listeners.append(recorder1)
 
         scene.run()
 
@@ -155,11 +155,11 @@ class TestLaser(unittest.TestCase):
         obj = scene.add(Target(name='obj', pos=[0, 100], vel=[1, 0], damage=5))
         obj.access_rules.append(rules.entity_access_laser)
 
-        scene.step_handlers.append(StepEvent(times=1.0, evt=guide_and_fire))
-        scene.step_handlers.append(StepEvent(times=5.0, entity=laser, evt=lambda l: l.switch(False)))
+        scene.step_listeners.append(StepEvent(times=1.0, evt=guide_and_fire))
+        scene.step_listeners.append(StepEvent(times=5.0, entity=laser, evt=lambda l: l.switch(False)))
 
         recorder1 = ResultRecord(obj, attr='damage')
-        scene.step_handlers.append(recorder1)
+        scene.step_listeners.append(recorder1)
 
         scene.run()
 

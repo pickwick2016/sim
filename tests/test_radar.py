@@ -75,7 +75,7 @@ class TestRadar(unittest.TestCase):
         scene.add(Target(pos=[150, 0], vel=[-5.0, 0], rcs=1.0))  # 测试动目标
 
         recorder = ResultRecord(radar)
-        scene.step_handlers.append(recorder)
+        scene.step_listeners.append(recorder)
         scene.run()
 
         self.assertTrue(len(recorder.results) > 12)
@@ -98,7 +98,7 @@ class TestRadar(unittest.TestCase):
         scene.add(Target(pos=[150, 0], rcs=1.0))  # 测试静止目标
 
         recorder=ResultRecord(radar)
-        scene.step_handlers.append(recorder)
+        scene.step_listeners.append(recorder)
         scene.run()
 
         self.assertTrue(len(recorder.results) > 12)
@@ -111,7 +111,7 @@ class TestRadar(unittest.TestCase):
         scene.add(Target(pos=[150, 0], vel=[5.0, 0], rcs=1.0))  # 测试动目标
 
         recorder=ResultRecord(radar)
-        scene.step_handlers.append(recorder)
+        scene.step_listeners.append(recorder)
         scene.run()
 
         self.assertTrue(len(radar._outputs) == 0)

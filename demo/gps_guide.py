@@ -58,7 +58,7 @@ def play_once():
     
     scene = Scenario(end=50)
     setup_scene(scene)
-    scene.step_handlers.append(StepEvent(entity='uav', evt=print_uav))
+    scene.step_listeners.append(StepEvent(entity='uav', evt=print_uav))
 
     agent = GpsAgent()
 

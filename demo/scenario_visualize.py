@@ -27,11 +27,11 @@ def main():
     uav = scene.add(Uav(name='uav-1', tracks=[[150, 0], [0, 0]], speed=5.0, two_way=False))
     scene.add(Uav(name='uav-2', tracks=[[-150, 150], [0, 0]], speed=10.0))
 
-    scene.step_handlers.append(lambda s: time.sleep(0.01))
-    scene.step_handlers.append(lambda s: print(s.clock_info))
-    scene.step_handlers.append(
+    scene.step_listeners.append(lambda s: time.sleep(0.01))
+    scene.step_listeners.append(lambda s: print(s.clock_info))
+    scene.step_listeners.append(
         StepEvent(entity=uav, evt=lambda r: print('uav-position : ', r.position)))
-    scene.step_handlers.append(
+    scene.step_listeners.append(
         StepEvent(entity=radar, evt=lambda r: print('radar-results : ', r.results)))
     # scene.step_handlers.append(StepEvent(times=[10, 20, 30], evt=add_uav))
 

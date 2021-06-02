@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import copy
 import time
-from typing import Optional, Tuple, List, Callable, Union
+from typing import Optional, Tuple, List, Callable, Union, Any
 
 
 class Entity:
@@ -22,6 +22,7 @@ class Entity:
         clock_info: 实体相关的仿真时间信息.
         is_active: 实体是否处于活动状态.
         access_rules: 交互规则列表.
+        step_rules: 步进规则列表.
     """
 
     def __init__(self, name: str = '', **kwargs):
@@ -33,6 +34,8 @@ class Entity:
         self.__name: str = name
         self.__active: bool = True
         self.__scene: Optional[Scenario] = None
+        self.step_rules: List[
+            Callable[[Entity, Tuple[float, float]], None]] = []
         self.access_rules: List[Callable[[Entity, Entity], None]] = []
 
     @property
@@ -61,7 +64,7 @@ class Entity:
         """
         self.__active = False
 
-    def attach(self, scene=None):
+    def attach(self, scene=None) -> None:
         """ 关联场景. """
         self.__scene = scene
 
@@ -74,7 +77,8 @@ class Entity:
         
         :param clock: 当前时钟信息.
         """
-        pass
+        for rule in self.step_rules:
+            rule(self, clock)
 
     def access(self, others: List[Entity]) -> None:
         """ 与其他实体交互，改变自己状态. 
@@ -98,11 +102,24 @@ class Scenario:
         :param mode: 运行模式.
         """
         self.__entities: List[Entity] = []
-        self.__clock = SimClock(start=start, end=end, step=step, mode=mode, **kwargs)
-        self.step_handlers: List[Callable[[Scenario], None]] = []
+        self.__clock = SimClock(start=start, end=end,
+                                step=step, mode=mode, **kwargs)
+        self.step_listeners: List[Callable[[Scenario], None]] = []
 
     def set_params(self, **kwargs):
+        """ 设置场景参数.
+        """
         self.__clock.set_params(**kwargs)
+
+    def add_step_listener(self, listener: Callable) -> Any:
+        """ 增加步进消息监听器.
+
+        :param listener: 步进消息监听器.
+        :return: 新增的步进消息监听器.
+        """
+        assert listener is not None
+        self.step_listeners.append(listener)
+        return listener
 
     @property
     def entities(self) -> List[Entity]:
@@ -180,10 +197,11 @@ class Scenario:
             active_entities = self.active_entities
             shadow_entities = copy.deepcopy(active_entities)
             for obj in active_entities:
-                others = [other for other in shadow_entities if other.id != obj.id]
+                others = [
+                    other for other in shadow_entities if other.id != obj.id]
                 obj.access(others)
 
-            for handler in self.step_handlers:
+            for handler in self.step_listeners:
                 handler(self)
         return tt
 

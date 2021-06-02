@@ -19,7 +19,7 @@ def setup_scene(scene: Scenario):
     scene.add(Receiver())
     scene.add(Laser())
     scene.add(Jammer())
-    scene.step_handlers.append(lambda s: print(time.time()))
+    scene.step_listeners.append(lambda s: print(time.time()))
 
 
 def main():

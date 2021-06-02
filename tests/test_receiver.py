@@ -54,7 +54,7 @@ class TestReceiver(unittest.TestCase):
         recv = scene.add(Receiver(pos=(0, 0)))  # 默认探测器.
         scene.add(Target(pos=(0, 5), vel=(1, 0), signal=1.0))  # 运动目标
         recorder = ResultRecord(recv)
-        scene.step_handlers.append(recorder)
+        scene.step_listeners.append(recorder)
         scene.run()
 
         self.assertTrue(31 >= len(recorder.results) >= 29)
@@ -77,7 +77,7 @@ class TestReceiver(unittest.TestCase):
         obj = scene.add(
             Target(pos=[5, 0], vel=(1, 0), signal=1.0))
         recorder = ResultRecord(recv)
-        scene.step_handlers.append(recorder)
+        scene.step_listeners.append(recorder)
         scene.run()
 
         self.assertTrue(11 >= len(recorder.results) >= 9)
@@ -97,7 +97,7 @@ class TestReceiver(unittest.TestCase):
         obj = scene.add(
             Target(pos=[5, 0], vel=(1, 0), signal=1.0))
         recorder = ResultRecord(recv)
-        scene.step_handlers.append(recorder)
+        scene.step_listeners.append(recorder)
         scene.run()
 
         self.assertTrue(301 >= len(recorder.results) >= 299)
@@ -116,7 +116,7 @@ class TestReceiver(unittest.TestCase):
         recv = scene.add(Receiver(pos=[0, 0], rate=0.0))
         scene.add(Target(pos=[5, 0], life=10.0, signal=1.0))  # 寿命不超过10的目标.
         recorder = ResultRecord(recv)
-        scene.step_handlers.append(recorder)
+        scene.step_listeners.append(recorder)
         scene.run()
 
         self.assertTrue(len(recorder.results) > 0)
@@ -133,7 +133,7 @@ class TestReceiver(unittest.TestCase):
         scene.add(Target(pos=(0, -10), vel=(1, 0), signal=1.0))
 
         recorder = ResultRecord(recv)
-        scene.step_handlers.append(recorder)
+        scene.step_listeners.append(recorder)
         scene.run()
 
         self.assertTrue(31 >= len(recorder.results) >= 29)

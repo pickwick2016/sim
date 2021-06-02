@@ -46,7 +46,7 @@ class TestEo(unittest.TestCase):
         eo = scene.add(EoDetector(pos=[0, 0]))  # 默认探测器.
         scene.add(Target(pos=[0, 5]))
         recorder = ResultRecord(eo, attr='result')
-        scene.step_handlers.append(recorder)
+        scene.step_listeners.append(recorder)
         scene.run()
 
         self.assertTrue(len(recorder.results) == 0)  # 没有引导，没有结果.
@@ -57,7 +57,7 @@ class TestEo(unittest.TestCase):
         scene.add(Target(pos=[5, 0]))  # 静止目标.
 
         recorder = ResultRecord(eo, attr='result')
-        scene.step_handlers.append(recorder)
+        scene.step_listeners.append(recorder)
 
         eo.guide([util.rad(90.0)])  # 有正确引导
         scene.run(reset=False)
@@ -71,7 +71,7 @@ class TestEo(unittest.TestCase):
         eo = scene.add(EoDetector(pos=[0, 0]))  # 默认探测器.
         obj = scene.add(Target(pos=[0, 50], vel=[1, 0]))  # 运动目标
         recorder = ResultRecord(eo, attr='result')
-        scene.step_handlers.append(recorder)
+        scene.step_listeners.append(recorder)
 
         eo.guide([util.rad(0.0)])  # 有正确引导；立刻起效，不然会被甩开
         scene.run(reset=False)
@@ -85,7 +85,7 @@ class TestEo(unittest.TestCase):
         eo = scene.add(EoDetector(pos=[0, 0]))  # 默认探测器.
         obj = scene.add(Target(pos=[0, 50], vel=[1, 0], life=10.0))  # 运动目标, 生命为10.
         recorder = ResultRecord(eo, attr='result')
-        scene.step_handlers.append(recorder)
+        scene.step_listeners.append(recorder)
 
         eo.guide([util.rad(0.0)])  # 有正确引导；立刻起效，不然会被甩开
         scene.run(reset=False)
@@ -106,10 +106,10 @@ class TestEo(unittest.TestCase):
         eo = scene.add(EoDetector(name='eo', pos=[0, 0]))
         obj = scene.add(Target(name='obj', pos=[100, 100], vel=[1, 0], life=20.0))
 
-        scene.step_handlers.append(StepEvent(times=5, evt=guide_eo))
+        scene.step_listeners.append(StepEvent(times=5, evt=guide_eo))
            
         records = ResultRecord(eo, attr='result')
-        scene.step_handlers.append(records)
+        scene.step_listeners.append(records)
         scene.run()
 
         self.assertTrue(151 >= len(records.results) >= 149)
