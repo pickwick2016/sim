@@ -2,12 +2,9 @@
 向量工具模块.
 """
 
-from sys import implementation
 from typing import Iterable
 import numpy as np
 import math
-
-from numpy.core.fromnumeric import shape
 
 
 def vec(v: Iterable) -> np.array:
