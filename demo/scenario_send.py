@@ -11,10 +11,10 @@ from sim import Scenario
 
 
 def main():
-    scene = Scenario(end=60, mode='')
-    jammer = scene.add(Jammer(name='jammer', pos=[10, 10]))
-    receiver = scene.add(Receiver(name='recv-1', pos=[0, 0]))
-    uav = scene.add(Uav(tracks=[(100, 100, 50), (0, 0, 50)]))
+    scene = Scenario(end=60, mode='realtime')
+    scene.add(Jammer(name='jammer', pos=[10, 10]))
+    scene.add(Receiver(name='recv-1', pos=[0, 0]))
+    scene.add(Uav(tracks=[(100, 100, 50), (0, 0, 50)]))
 
     scene.add_step_listener(UdpSender(ip='127.0.0.1'))
     scene.run()
