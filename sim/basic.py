@@ -108,14 +108,14 @@ class Scenario:
         :param step: 仿真步长.默认值是0.1s。  
         :param mode: 运行模式.
         """
-        self.__entities: List[Entity] = []
-        self.__clock = SimClock(start=start, end=end,
+        self._entities: List[Entity] = []
+        self._clock = SimClock(start=start, end=end,
                                 step=step, mode=mode, **kwargs)
         self.step_listeners: List[Callable[[Scenario], None]] = []
 
     def set_params(self, **kwargs):
         """ 设置场景参数. """
-        self.__clock.set_params(**kwargs)
+        self._clock.set_params(**kwargs)
 
     def add_step_listener(self, listener: Callable) -> Any:
         """ 增加步进消息监听器.
@@ -130,24 +130,24 @@ class Scenario:
     @property
     def entities(self) -> List[Entity]:
         """ 场景中的实体列表. """
-        return self.__entities
+        return self._entities
 
     @property
     def active_entities(self) -> List[Entity]:
         """ 场景中活动实体列表. """
-        return list([e for e in self.__entities if e.is_active])
+        return list([e for e in self._entities if e.is_active])
 
     @property
     def clock_info(self) -> Tuple[float, float]:
-        return self.__clock.info()
+        return self._clock.info()
 
     def add(self, obj: Entity) -> Optional[Entity]:
         """ 增加实体. """
         if isinstance(obj, Entity):
-            ids = [e.id for e in self.__entities]
+            ids = [e.id for e in self._entities]
             if obj.id not in ids:
                 obj.attach(self)
-                self.__entities.append(obj)
+                self._entities.append(obj)
             return obj
         return None
 
@@ -155,14 +155,14 @@ class Scenario:
         """ 移除对象. """
         if obj := self.find(obj_ref):
             obj.attach(None)
-            self.__entities.remove(obj)
+            self._entities.remove(obj)
         return obj is not None
 
     def clear(self):
         """ 移除所有实体. """
-        for obj in self.__entities:
+        for obj in self._entities:
             obj.attach(None)
-        self.__entities.clear()
+        self._entities.clear()
 
     def find(self, obj_ref: Union[Entity, int, str], active=True) -> Optional[Entity]:
         """ 查找实体.
@@ -174,7 +174,7 @@ class Scenario:
         obj_v = obj_ref if isinstance(obj_ref, Entity) else None
         id_v = obj_ref if isinstance(obj_ref, int) else None
         name_v = obj_ref if isinstance(obj_ref, str) else None
-        for e in self.__entities:
+        for e in self._entities:
             if (obj_v and e is obj_v) or (id_v and e.id == id_v) or (name_v and e.name == name_v):
                 return e if (not active) or e.is_active else None
         return None
@@ -184,8 +184,8 @@ class Scenario:
         
         :return: 场景起始时钟信息.
         """
-        self.__clock.reset()
-        for e in self.__entities:
+        self._clock.reset()
+        for e in self._entities:
             e.reset()
         return self.clock_info
 
@@ -195,7 +195,7 @@ class Scenario:
         :return: 当前时钟信息 (now, dt)， None表示执行完毕.
         :see: SimClock.step()
         """
-        tt = self.__clock.step()
+        tt = self._clock.step()
         if tt is not None:
             active_entities = self.active_entities
             for e in active_entities:
@@ -238,15 +238,15 @@ class SimClock:
         self.end = end
         self.dt = float(step)
         self.mode = mode
-        self.__realtime = None
-        self.__now = 0.0
+        self._realtime = None
+        self._now = 0.0
         self.reset()
 
     def reset(self):
         """ 重置时钟. """
-        self.__now = self.start
+        self._now = self.start
         if self.mode == 'realtime':
-            self.__realtime = time.time()
+            self._realtime = time.time()
 
     def step(self) -> Optional[Tuple[float, float]]:
         """ 步进.
@@ -254,12 +254,12 @@ class SimClock:
         :return: 时钟结束，返回None; 否则返回 (now, dt).
         """
         if self.mode == 'realtime':
-            time_passed = time.time() - self.__realtime
-            time_left = max(self.__now - time_passed, 0.001)
+            time_passed = time.time() - self._realtime
+            time_left = max(self._now - time_passed, 0.001)
             if time_left > 0.001:
                 time.sleep(time_left)
 
-        self.__now += self.dt
+        self._now += self.dt
         return self.info() if not self.is_over() else None
 
     def info(self) -> Tuple[float, float]:
@@ -269,11 +269,11 @@ class SimClock:
             now - 当前时间.  
             dt - 上一步到当前时间经过的时长. 起始时是0，后续是dt。
         """
-        return self.__now, (0.0 if self.__now == self.start else self.dt)
+        return self._now, (0.0 if self._now == self.start else self.dt)
 
     def is_over(self) -> bool:
         """ 是否结束. """
-        return self.__now > self.end if self.end is not None else False
+        return self._now > self.end if self.end is not None else False
 
 
 class EntityId:

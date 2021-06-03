@@ -30,13 +30,14 @@ class Jammer(basic.Entity):
     * switch: 开关干扰机.
     """
 
-    def __init__(self, name='', pos=[0, 0], type=JammerType.DataLink, **kwargs):
+    def __init__(self, name='', pos=[0, 0], type=JammerType.DataLink, power=0.0, **kwargs):
         """ 初始化.
 
         :param name: 实体名称.
         :param pos: 干扰器位置.
         :param type: 干扰器类型.
         :param max_r: 最大干扰距离.
+        :param power: 发射功率.(dBW)
         :see: AerRange.
         """
         super().__init__(name=name, **kwargs)
@@ -44,7 +45,7 @@ class Jammer(basic.Entity):
         self.type = type
         self.power_on = False
         self.position = vec.vec3(pos)
-        self.power: float = 1.0  # 干扰信号功率
+        self.power: float = float(power)  # 干扰信号功率
 
     def switch(self, on: Optional[bool]):
         """ 开关干扰机. 
@@ -61,7 +62,7 @@ class Jammer(basic.Entity):
 
     def in_range(self, pos) -> bool:
         """ 判断目标在范围内. """
-        aer = util.polar(self.position, pos)
+        aer = util.xyz2aer(self.position, pos)
         return self.aer_range.contains(aer)
 
     def __str__(self) -> str:
