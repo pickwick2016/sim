@@ -11,7 +11,7 @@ from sim import Scenario
 
 
 def main():
-    scene = Scenario(end=60, mode='realtime')
+    scene = Scenario(end=60, mode='')
     scene.add(Jammer(name='jammer', pos=[10, 10]))
     scene.add(Receiver(name='recv-1', pos=[0, 0]))
     scene.add(Uav(tracks=[(100, 100, 50), (0, 0, 50)]))

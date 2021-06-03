@@ -108,7 +108,7 @@ def pack_eo(eo: EoDetector):
     return data
 
 
-def pack_laser(laser):
+def pack_laser(laser: Laser):
     """ 激光信息打包. """
     data = struct.pack('II', laser.id, TypeIds[Laser])
     data = data + struct.pack('3f', * laser.position)
@@ -117,7 +117,7 @@ def pack_laser(laser):
     return data
 
 
-def pack_receiver(recv):
+def pack_receiver(recv: Receiver):
     """ 接收机信息打包. """
     data = struct.pack('II', recv.id, TypeIds[Receiver])
     data = data + struct.pack('3f', * recv.position)

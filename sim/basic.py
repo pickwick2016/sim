@@ -114,8 +114,7 @@ class Scenario:
         self.step_listeners: List[Callable[[Scenario], None]] = []
 
     def set_params(self, **kwargs):
-        """ 设置场景参数.
-        """
+        """ 设置场景参数. """
         self.__clock.set_params(**kwargs)
 
     def add_step_listener(self, listener: Callable) -> Any:
@@ -168,7 +167,8 @@ class Scenario:
     def find(self, obj_ref: Union[Entity, int, str], active=True) -> Optional[Entity]:
         """ 查找实体.
 
-        :param ref: 查找条件. 可以是实体、实体id、实体名字.    
+        :param obj_ref: 查找条件. 可以是实体、实体id、实体名字.
+        :param active: 是否只查找活动状态实体.
         :return: 符合条件的实体，找不到返回None  
         """
         obj_v = obj_ref if isinstance(obj_ref, Entity) else None
@@ -234,27 +234,28 @@ class SimClock:
         :param step: 时间步进.
         :param mode: 时钟模式.
         """
-        self.start = start
+        self.start = float(start)
         self.end = end
-        self.dt = step
+        self.dt = float(step)
         self.mode = mode
-        self.realtime = None
+        self.__realtime = None
         self.__now = 0.0
         self.reset()
 
     def reset(self):
+        """ 重置时钟. """
         self.__now = self.start
         if self.mode == 'realtime':
-            self.realtime = time.time()
+            self.__realtime = time.time()
 
     def step(self) -> Optional[Tuple[float, float]]:
         """ 步进.
 
-        :return: (now, dt)
+        :return: 时钟结束，返回None; 否则返回 (now, dt).
         """
         if self.mode == 'realtime':
-            time_used = time.time() - self.realtime
-            time_left = max(self.__now - time_used, 0.001)
+            time_passed = time.time() - self.__realtime
+            time_left = max(self.__now - time_passed, 0.001)
             if time_left > 0.001:
                 time.sleep(time_left)
 
@@ -264,17 +265,15 @@ class SimClock:
     def info(self) -> Tuple[float, float]:
         """ 当前时钟信息 
         
-        :return: (now, dt)
-                now: 当前时间.
-                dt: 上一步到当前时间经过的时长. 起始时是0，后续是dt。
+        :return: (now, dt). 
+            now - 当前时间.  
+            dt - 上一步到当前时间经过的时长. 起始时是0，后续是dt。
         """
         return self.__now, (0.0 if self.__now == self.start else self.dt)
 
     def is_over(self) -> bool:
         """ 是否结束. """
-        if self.end is None:
-            return False
-        return self.__now > self.end
+        return self.__now > self.end if self.end is not None else False
 
 
 class EntityId:
@@ -282,10 +281,12 @@ class EntityId:
     __id = 0
 
     @staticmethod
-    def reset():
+    def reset() -> None:
+        """ 重置. """
         EntityId.__id = 0
 
     @staticmethod
-    def gen():
+    def gen() -> int:
+        """ 产生 id """
         EntityId.__id += 1
         return EntityId.__id

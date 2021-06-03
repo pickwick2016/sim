@@ -13,23 +13,23 @@ from .basic import Scenario, Entity
 class StepEvent:
     """ 时间事件. 
     
-    配合 Scene 的 step_handlers 使用的时间时间处理辅助类.
+    配合 Scene 的 step_listeners 使用的时间时间处理辅助类.
 
     Usages:
         # 在1.3秒，对场景，执行打印时钟信息
-        scene.step_handlers.append(TimeEvent(times=1.3, evt=lambda s: print(s.clock_info)))
+        scene.step_listeners.append(TimeEvent(times=1.3, evt=lambda s: print(s.clock_info)))
         
         # 在1、2秒，对场景，执行打印时钟信息
-        scene.step_handlers.append(TimeEvent(times=[1, 2], evt=lambda s: print(s.clock_info)))
+        scene.step_listeners.append(TimeEvent(times=[1, 2], evt=lambda s: print(s.clock_info)))
 
         # 在每次步进，对场景，执行打印时钟信息
-        scene.step_handlers.append(TimeEvent(evt=lambda s: print(s.clock_info)))
+        scene.step_listeners.append(TimeEvent(evt=lambda s: print(s.clock_info)))
         
         # 在每次步进，对jammer-1实体，执行打印时钟信息
-        scene.step_handlers.append(TimeEvent(entity='jammer-1', evt=lambda e: print(e.clock_info)))
+        scene.step_listeners.append(TimeEvent(entity='jammer-1', evt=lambda e: print(e.clock_info)))
 
         # 在1.3秒，对jammer-1实体，执行打印时钟信息
-        scene.step_handlers.append(TimeEvent(times=1.3, entity='jammer-1', evt=lambda e: print(e.clock_info)))
+        scene.step_listeners.append(TimeEvent(times=1.3, entity='jammer-1', evt=lambda e: print(e.clock_info)))
     """
 
     def __init__(self, evt: Callable[[Any], None], times: Union[float, Iterable[float], None] = None,
