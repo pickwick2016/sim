@@ -3,8 +3,9 @@
 """
 
 from typing import Iterable
-import numpy as np
 import math
+
+import numpy as np
 
 
 def vec(v: Iterable) -> np.array:
@@ -14,18 +15,24 @@ def vec(v: Iterable) -> np.array:
 
 def vec3(v: Iterable) -> np.array:
     """ 3维向量. """
-    ret = np.zeros(shape=(3,), dtype=np.float64)
-    for i in range(min(3, len(v))):
-        ret[i] = v[i]
-    return ret
+    if len(v) == 3:
+        return np.array(v, dtype=np.float64)
+    else:
+        ret = np.zeros(shape=(3,), dtype=np.float64)
+        for i in range(min(3, len(v))):
+            ret[i] = v[i]
+        return ret
 
 
 def vec2(v: Iterable) -> np.array:
     """ 2维向量. """
-    ret = np.zeros(shape=(2,), dtype=np.float64)
-    for i in range(min(2, len(v))):
-        ret[i] = v[i]
-    return ret
+    if len(v) == 2:
+        return np.array(v, dtype=np.float64)
+    else:
+        ret = np.zeros(shape=(2,), dtype=np.float64)
+        for i in range(min(2, len(v))):
+            ret[i] = v[i]
+        return ret
 
 
 def zeros_like(v: Iterable) -> np.array:
@@ -47,24 +54,16 @@ def norm(v) -> float:
 def unit(v):
     """ 计算单位向量. """
     d = norm(v)
-    if d > 0.:
-        return v / dist(v)
-    else:
-        return zeros_like(v)
+    return v / dist(v) if d > 0.0 else zeros_like(v)
 
 
 def angle(v1, v2) -> float:
-    """ 计算向量夹角
-
-    :return: 向量夹角(弧度值).
-    """
-    if norm(v1) > 0. and norm(v2) > 0.:
-        return math.acos(np.dot(unit(v1), unit(v2)))
-    else:
-        return 0.
+    """ 计算向量夹角(弧度值). """
+    not_zero = norm(v1) > 0. and norm(v2) > 0.
+    return math.acos(np.dot(unit(v1), unit(v2))) if not_zero else 0.
 
 
-def proj(v1, v2):
+def proj(v1, v2) -> np.array:
     """ 计算v1投影到v2上的向量. """
     v2u = unit(v2)
     return v2u * np.dot(v1, v2u)
