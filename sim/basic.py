@@ -38,6 +38,13 @@ class Entity:
             Callable[[Entity, Tuple[float, float]], None]] = []
         self.access_rules: List[Callable[[Entity, Entity], None]] = []
 
+    def __deepcopy__(self, memo={}) -> Entity:
+        ret = copy.copy(self)
+        for k, v in self.__dict__.items():
+            if k not in ('_Entity__id', '_Entity__name', '_Entity__active', '_Entity__scene', 'step_rules', 'access_rules'):
+                setattr(ret, k, copy.deepcopy(v, memo=memo))
+        return ret
+
     @property
     def id(self) -> int:
         """ 实体 id. """
@@ -201,8 +208,8 @@ class Scenario:
                     other for other in shadow_entities if other.id != obj.id]
                 obj.access(others)
 
-            for handler in self.step_listeners:
-                handler(self)
+            for listener in self.step_listeners:
+                listener(self)
         return tt
 
     def run(self, reset=True):
