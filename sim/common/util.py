@@ -85,6 +85,16 @@ def aer2xyz(center, aer):
     return vec.vec([x, y, z]) + vec.vec(center)
 
 
+def lla2xyz(center, lla):
+    """ 大地坐标到 xyz 坐标 """
+    raise NotImplementedError
+
+
+def xyz2lla(center, xyz):
+    """ xyz 坐标到大地坐标 """
+    raise NotImplementedError
+
+
 def polar(center, pos):
     """ 计算极坐标. 
     

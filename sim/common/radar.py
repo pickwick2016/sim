@@ -138,15 +138,12 @@ class Radar(detector.Detector):
             return None
         aer = util.polar(self.position, other.position)
         if self.aer_range.contains(aer):
-            if self._min_v > 0.0:
+            if self._min_v > 0.0 and hasattr(other, 'velocity'):
                 # 判断最低速度（如有必要）
-                if hasattr(other, 'velocity'):
-                    proj_v = vec.norm(
-                        vec.proj(other.velocity, self.position - other.position))
-                    if proj_v > self._min_v:
-                        return aer
-                else:
-                    return None
+                proj_v = vec.norm(
+                    vec.proj(other.velocity, self.position - other.position))
+                if proj_v > self._min_v:
+                    return aer
             else:
                 return aer
         return None
