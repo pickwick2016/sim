@@ -137,13 +137,8 @@ class Radar(detector.Detector):
         if not hasattr(other, 'rcs') or not hasattr(other, 'position'):
             return None
         aer = util.polar(self.position, other.position)
-<<<<<<< HEAD
         if self.aer_range.contains(aer):
             if self._min_v > 0.0 and hasattr(other, 'velocity'):
-=======
-        if self.aer_range.contain(aer):
-            if self._min_v > 0.0:
->>>>>>> laser-2
                 # 判断最低速度（如有必要）
                 proj_v = vec.norm(
                     vec.proj(other.velocity, self.position - other.position))
@@ -172,7 +167,8 @@ class Radar(detector.Detector):
 
 
 # 雷达探测结果.
-RadarResult = namedtuple('RadarResult', ['batch_id', 'time', 'value', 'state', 'obj_id'])
+RadarResult = namedtuple(
+    'RadarResult', ['batch_id', 'time', 'value', 'state', 'obj_id'])
 
 
 class InnerRadarResult:
