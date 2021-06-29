@@ -42,9 +42,9 @@ def entity_access_laser(obj, laser: Laser):
     """ 实体与激光交互. """
     if isinstance(obj, Entity) and isinstance(laser, Laser):
         if hasattr(obj, 'damage') and hasattr(obj, 'position') and laser.power_on:
-            if laser.in_dir(obj):
+            if laser.is_target(obj):
                 _, dt = laser.clock_info
-                obj.damage = obj.damage - dt * laser.power
+                obj.damage = obj.damage - dt * laser.damage(obj)
                 if obj.damage <= 0.0:
                     obj.deactive()
 

@@ -165,7 +165,7 @@ class Laser(sim.Entity):
         if not hasattr(other, 'position'):
             return None
         aer = util.polar(self.position, other.position)
-        if self.aer_range.contains(aer):
+        if self.aer_range.contain(aer):
             ae = vec.vec2(aer)
             conds = [util.angle(ae[i], self.dir[i], 'r') <
                      self.fov for i in range(len(ae))]
@@ -176,7 +176,7 @@ class Laser(sim.Entity):
     def in_dir(self, other) -> bool:
         assert hasattr(other, 'position')
         aer = util.polar(self.position, other.position)
-        if self.aer_range.contains(aer):
+        if self.aer_range.contain(aer):
             ae = vec.vec2(aer)
             conds = [util.angle(ae[i], self.dir[i], 'r') <
                      0.001 for i in range(len(ae))]

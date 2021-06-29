@@ -13,23 +13,23 @@ def vec(v: Iterable) -> np.array:
     return np.array(v, dtype=np.float64)
 
 
-def vec3(v: Iterable) -> np.array:
+def vec3(v: Iterable, padding=0.0) -> np.array:
     """ 3维向量. """
     if len(v) == 3:
         return np.array(v, dtype=np.float64)
     else:
-        ret = np.zeros(shape=(3,), dtype=np.float64)
+        ret = np.ones(shape=(3,), dtype=np.float64) * padding
         for i in range(min(3, len(v))):
             ret[i] = v[i]
         return ret
 
 
-def vec2(v: Iterable) -> np.array:
+def vec2(v: Iterable, padding=0.0) -> np.array:
     """ 2维向量. """
     if len(v) == 2:
         return np.array(v, dtype=np.float64)
     else:
-        ret = np.zeros(shape=(2,), dtype=np.float64)
+        ret = np.ones(shape=(2,), dtype=np.float64) * padding
         for i in range(min(2, len(v))):
             ret[i] = v[i]
         return ret
@@ -60,10 +60,20 @@ def unit(v):
 def angle(v1, v2) -> float:
     """ 计算向量夹角(弧度值). """
     not_zero = norm(v1) > 0. and norm(v2) > 0.
-    return math.acos(np.dot(unit(v1), unit(v2))) if not_zero else 0.
+    val = np.dot(unit(v1), unit(v2))
+    val = _clip((-1, 1), val)
+    return math.acos(val) if not_zero else 0.
 
 
 def proj(v1, v2) -> np.array:
     """ 计算v1投影到v2上的向量. """
     v2u = unit(v2)
     return v2u * np.dot(v1, v2u)
+
+
+def _clip(rng, val):
+    if val < rng[0]:
+        val = rng[0]
+    if val > rng[1]:
+        val = rng[1]
+    return val

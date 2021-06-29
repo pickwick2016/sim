@@ -93,7 +93,7 @@ class EoDetector(detector.Detector):
         """ 检测目标. """
         if hasattr(other, 'position'):
             aer = util.polar(self.position, other.position)
-            if self.aer_range.contains(aer) and self.in_fov(other):
+            if self.aer_range.contain(aer) and self.in_fov(other):
                 return vec.vec2(aer)
         return None
 

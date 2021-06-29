@@ -137,7 +137,7 @@ class Radar(detector.Detector):
         if not hasattr(other, 'rcs') or not hasattr(other, 'position'):
             return None
         aer = util.polar(self.position, other.position)
-        if self.aer_range.contains(aer):
+        if self.aer_range.contain(aer):
             if self._min_v > 0.0:
                 # 判断最低速度（如有必要）
                 if hasattr(other, 'velocity'):

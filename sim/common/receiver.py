@@ -58,7 +58,7 @@ class Receiver(detector.Detector):
         """ 检测目标.  """
         if hasattr(other, 'position') and hasattr(other, 'signal'):
             aer = util.polar(self.position, other.position)
-            if self.aer_range.contains(aer):
+            if self.aer_range.contain(aer):
                 return aer[0]
         return None
 
