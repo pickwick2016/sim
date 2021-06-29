@@ -27,15 +27,15 @@ class TestLaser(unittest.TestCase):
     def test_detect(self):
         """ 测试检测功能. """
         laser = Laser(pos=[0, 0])
-        self.assertAlmostEqual(laser.dir[0], 0.0)  # 视场指向是0.
+        self.assertAlmostEqual(laser.direction[0], 0.0)  # 视场指向是0.
 
         obj = Target(pos=[10, 10])  # 视场外目标.
-        ret = laser.detect(obj)
+        ret = laser._detect(obj)
         self.assertTrue(ret is None)
 
-        laser.guide([util.rad(45)], True) # 引导视场指向
-        self.assertAlmostEqual(laser.dir[0], util.rad(45))  # 视场指向是0.
-        ret = laser.detect(obj) 
+        laser.guide((util.rad(45.0),), True) # 引导视场指向
+        self.assertAlmostEqual(laser.direction[0], util.rad(45.0))  # 视场指向是0.
+        ret = laser._detect(obj) 
         self.assertTrue(ret is not None)
 
     def test_run_detect(self):
@@ -82,42 +82,49 @@ class TestLaser(unittest.TestCase):
         # 测试4.
         scene = Scenario(end=30)
         laser = scene.add(Laser(pos=[0, 0]))  # 默认探测器.
-        obj = scene.add(Target(pos=[0, 50], vel=[1, 0], life=10.0))  # 运动目标, 生命为10.
         recorder = ResultRecord(laser, attr='result')
         scene.step_listeners.append(recorder)
+
+        obj = scene.add(Target(pos=[0, 50], vel=[1, 0], life=10.0))  # 运动目标, 生命为10.
 
         laser.guide([util.rad(0.0)])  # 有正确引导；立刻起效，不然会被甩开
         scene.run(reset=False)
 
         self.assertTrue(101 >= len(recorder.results) >= 99)   # 有引导，有结果.
         values = [tuple(ret.value.tolist()) for ret in recorder.results]
-        # self.assertTrue(len(values) == len(set(values)))  # 运动目标，结果不同
+        self.assertTrue(len(values) == len(set(values)))  # 运动目标，结果不同
 
     def test_run_fire(self):
         """ 测试开火. """
         fire = lambda l : l.switch(True)
 
+        def guide_and_fire(scene):
+            laser, obj = scene.find('laser'), scene.find('obj')
+            aer = util.polar(laser.position, obj.position)
+            laser.guide(vec.vec2(aer))
+            laser.switch(True)
+
         # 静态开火，测试最大时间.
         scene = Scenario(end=30)
-        laser = scene.add(Laser(work=10, recover=10))
+        laser = scene.add(Laser(battery=(10, 10)))
         scene.step_listeners.append(StepEvent(times=1.0, entity=laser, evt=fire))
 
         recorder1 = ResultRecord(laser, attr='power_on')
         scene.step_listeners.append(recorder1)
-        recorder2 = ResultRecord(laser, attr='work_time')
+        recorder2 = ResultRecord(laser, attr='battery')
         scene.step_listeners.append(recorder2)
 
         scene.run()
 
         self.assertTrue(recorder1.results[-1] == False)
-        self.assertAlmostEqual(recorder2.results[-1], 10)
+        self.assertAlmostEqual(recorder2.results[-1], 1.0)
 
         # 静态开火，测试损坏能力.
         scene = Scenario(end=30)
-        laser = scene.add(Laser(name='laser', pos=[0, 0], work=10))
+        laser = scene.add(Laser(name='laser', pos=[0, 0], battery=(10,)))
         obj = scene.add(Target(name='obj', pos=[0, 100], damage=5))
         obj.access_rules.append(rules.entity_access_laser)
-        scene.step_listeners.append(StepEvent(times=1.0, entity=laser, evt=fire))
+        scene.step_listeners.append(StepEvent(times=1.0, evt=guide_and_fire))
 
         recorder1 = ResultRecord(obj, attr='damage')
         scene.step_listeners.append(recorder1)
@@ -125,17 +132,11 @@ class TestLaser(unittest.TestCase):
         scene.run()
 
         self.assertTrue(recorder1.results[0] == 5.0)
-        self.assertTrue(recorder1.results[-1] <= 0.0)
+        self.assertTrue(recorder1.results[-1] < 5.0)
 
         # 动态开火
-        def guide_and_fire(scene):
-            laser, obj = scene.find('laser'), scene.find('obj')
-            aer = util.polar(laser.position, obj.position)
-            laser.guide(aer[0:-1])
-            laser.switch(True)
-
         scene = Scenario(end=30)
-        laser = scene.add(Laser(name='laser', pos=[0, 0], work=10))
+        laser = scene.add(Laser(name='laser', pos=[0, 0], battery=(10, )))
         obj = scene.add(Target(name='obj', pos=[0, 100], vel=[1, 0], damage=5))
         obj.access_rules.append(rules.entity_access_laser)
 
@@ -147,16 +148,16 @@ class TestLaser(unittest.TestCase):
         scene.run()
 
         self.assertTrue(recorder1.results[0] == 5.0)
-        self.assertTrue(recorder1.results[-1] <= 0.0)
+        self.assertTrue(recorder1.results[-1] < 5.0)
 
         # 动态开火和关火.
         scene = Scenario(end=30)
-        laser = scene.add(Laser(name='laser', pos=[0, 0], work=10))
+        laser = scene.add(Laser(name='laser', pos=[0, 0], battery=(10, )))
         obj = scene.add(Target(name='obj', pos=[0, 100], vel=[1, 0], damage=5))
         obj.access_rules.append(rules.entity_access_laser)
 
         scene.step_listeners.append(StepEvent(times=1.0, evt=guide_and_fire))
-        scene.step_listeners.append(StepEvent(times=5.0, entity=laser, evt=lambda l: l.switch(False)))
+        scene.step_listeners.append(StepEvent(times=5.1, entity=laser, evt=lambda l: l.switch(False)))
 
         recorder1 = ResultRecord(obj, attr='damage')
         scene.step_listeners.append(recorder1)
@@ -164,6 +165,7 @@ class TestLaser(unittest.TestCase):
         scene.run()
 
         self.assertTrue(recorder1.results[0] == 5.0)
-        self.assertAlmostEqual(recorder1.results[-1], 1.0)
+        self.assertTrue(recorder1.results[-1] < 5.0)
+        # self.assertAlmostEqual(recorder1.results[-1], 1.0)
 
         

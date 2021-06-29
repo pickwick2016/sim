@@ -63,7 +63,7 @@ class Jammer(basic.Entity):
     def in_range(self, pos) -> bool:
         """ 判断目标在范围内. """
         aer = util.xyz2aer(self.position, pos)
-        return self.aer_range.contains(aer)
+        return self.aer_range.contain(aer)
 
     def __str__(self) -> str:
         if self.power_on:

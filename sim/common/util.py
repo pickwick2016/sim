@@ -1,8 +1,15 @@
-from typing import Any, Iterable
+from typing import Any, Iterable, Callable, Optional
+from enum import Enum
 import math
 import numpy as np
 
 from .. import vec
+
+
+class AngleUnit(Enum):
+    """ 角度单位. """
+    Rad = 0  # 弧度.
+    Deg = 1  # 角度.
 
 
 def poly_center(polygon: Iterable) -> np.array:
@@ -62,6 +69,10 @@ def ar(center, pos):
     r = vec.norm(v)
     a = math.atan2(v[0], v[1]) % (math.pi * 2)
     return a, r
+
+
+def deg2(r) -> float:
+    return r * 180.0 / math.pi
 
 
 def xyz2aer(center, pos):
@@ -161,17 +172,45 @@ def deg(r: float) -> float:
     return (r % (math.pi * 2)) / (math.pi * 2) * 360
 
 
+def a_norm(a: float, unit='r', type='+'):
+    """ 规范角度.
+
+    :param unit: 角度单位. 'd'：度数；'r'：弧度.    
+    :param type: 规范类型. '+': 0～360； '-': -180～180.
+    """
+    assert unit in ('r', 'd') and type in ('+', '-')
+
+    if unit == 'r':
+        ret = a % (math.pi * 2)
+        if type == '-' and ret > math.pi:
+            ret = ret - math.pi * 2
+        return ret
+    elif unit == 'd':
+        ret = a % 360.0
+        if type == '-' and ret > 180.0:
+            ret = ret - 360.0
+        return ret
+    else:
+        raise Exception('parameters error')
+
+
 def angle(a1: float, a2: float, unit='d') -> float:
-    """ 计算两个角度的夹角. """
-    if unit == 'd' or unit == 'deg':
+    """ 计算两个角度的夹角. 
+
+    :param unit: 角度单位. 'd'：度数；'r'：弧度.
+    :return: 两个角度之间的夹角，单位见 unit.
+    """
+    assert unit in ['d', 'r']
+
+    if unit == 'd':
         da = abs(a1 % 360 - a2 % 360)
         return da if da <= 180 else (360 - da)
-    elif unit == 'r' or unit == 'rad':
+    elif unit == 'r':
         pi2 = math.pi * 2
         da = abs(a1 % pi2 - a2 % pi2)
         return da if da <= math.pi else (pi2 - da)
     else:
-        raise Exception('error')
+        raise Exception('paramerter error')
 
 
 def in_angle_range(rng: Iterable, v: float, unit='d') -> bool:
@@ -236,7 +275,7 @@ class AerRange:
         self.range_r[0] = kwargs['min_r'] if 'min_r' in kwargs else 0
         self.range_r[1] = kwargs['max_r'] if 'max_r' in kwargs else None
 
-    def contains(self, aer) -> bool:
+    def contain(self, aer) -> bool:
         """ 判断指定极坐标位置目标是否在范围内. """
         if aer is None:
             return False
@@ -247,3 +286,14 @@ class AerRange:
         return in_range(self.range_a, a) and in_range(self.range_e, e) \
             and in_range(self.range_r, r)
 
+
+def find(array: Iterable, check: Callable[[Any], bool]) -> Optional[Any]:
+    """ 查找.
+    :param array: 列表.
+    :param check: 检查函数.
+    :return: 返回查找的结果. 无结果返回 None.
+    """
+    for v in array:
+        if check(v):
+            return v
+    return None
