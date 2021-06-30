@@ -13,11 +13,13 @@ from .sensor import Sensor, SensorType
 class Laser(Entity):
     """ 激光. """
 
-    def __init__(self, name: str = '', pos=(0, 0), fov=util.rad(1.0), battery: Tuple[float, float] = (10, 30), **kwargs):
+    def __init__(self, name: str = '', pos=(0, 0), fov=util.rad(1.0), min_cap=(200, 5), max_cap=(1000, 10), battery: Tuple[float, float] = (120, 300), **kwargs):
         """ 初始化. 
 
         :param pos: 激光位置.
         :param fov: （粗跟踪）视场大小.
+        :param min_cap: 近端拦截能力（距离，时间）
+        :param max_cap: 远端拦截能力（距离，时间）
         :param battery: 电池信息. (放电时间，充电时间)
         :param capacity: 毁伤能力.
         """
@@ -26,8 +28,7 @@ class Laser(Entity):
         self.position = vec.vec3(pos)
         self._atp = Sensor(self, type=SensorType.Conic, params=fov)
         self._power_on: bool = False
-        self._capacity = LaserCapacity(
-            dist_rng=(500., 1000.), time_rng=(5., 10.))
+        self._capacity = LaserCapacity(min=min_cap, max=max_cap)
         self._battery_info = BatteryInfo(*battery)
         self._battery: float = 1.0
         self._state = LaserState.StandBy
@@ -57,14 +58,17 @@ class Laser(Entity):
 
     @property
     def battery(self) -> float:
+        """ 当前电池电量（百分比）"""
         return self._battery
 
     @property
     def state(self) -> LaserState:
+        """ 当前状态. """
         return self._state
 
     @property
     def direction(self):
+        """ 激光指向. """
         return self._atp.direction
 
     @property
@@ -74,27 +78,37 @@ class Laser(Entity):
 
     @property
     def capacity(self):
+        """ 毁伤能力. """
         return self._capacity
 
     @property
-    def result(self):
+    def result(self) -> Optional[LaserTarget]:
+        """ 当前跟踪目标情况. 
+        
+        如果没有被跟踪（锁定）的目标，返回None.
+        """
         return self._target
 
     def damage(self, obj) -> float:
-        """ 返回对目标单位时间内的损伤值.
+        """ 返回对目标单位时间内的损伤率（单位时间内的损伤值）.
 
         :return: <= 0.0 表示不会造成损伤.
         """
-        # TODO: 完善毁伤效果. 
+        # TODO: 完善毁伤效果.
         if self.is_target(obj):
             r = self._target.value[-1]
-            if r > self._capacity.dist_rng[1]:
+            if r > self._capacity.max[0]:
                 return 0.0
-            elif r < self._capacity.dist_rng[0]:
-                return 1.0 / self._capacity.time_rng[0]
+            elif r < self._capacity.min[0]:
+                return 1.0 / self._capacity.min[1]
             else:
-                return 1.0
-        return 0.0 
+                a = (r - self._capacity.min[0]) / \
+                    (self._capacity.max[0] - self._capacity.min[0])
+                t = a * \
+                    (self._capacity.max[1] - self._capacity.min[1]
+                     ) + self._capacity.min[1]
+                return 1.0 / t
+        return 0.0
 
     def switch(self, power_on: Optional[bool] = None) -> bool:
         """ 开关. 
@@ -180,8 +194,12 @@ class Laser(Entity):
 
 
 BatteryInfo = namedtuple(
-    'BatteryInfo', ['full', 'recover'], defaults=[10.1, 10.2])
-""" 电池信息. """
+    'BatteryInfo', ['full', 'recover'], defaults=[120, 300])
+""" 电池信息. 
+
+:prop full: 满电情况下放电时间（s）
+:prop recover: 空电情况下充电时间（s）
+"""
 
 
 LaserTarget = namedtuple('LaserTarget', ['time', 'value', 'obj_id'])
@@ -192,7 +210,12 @@ LaserTarget = namedtuple('LaserTarget', ['time', 'value', 'obj_id'])
 :prop obj_id: 关联目标的 id.
 """
 
-LaserCapacity = namedtuple('LaserCapacity', ['dist_rng', 'time_rng'])
+LaserCapacity = namedtuple('LaserCapacity', ['min', 'max'])
+""" 激光拦截能力
+
+:prop min: 近端距离能力. (距离 m，时间 s)
+:prop max: 远端距离能力. (距离 m，时间 s)
+"""
 
 
 class LaserState(Enum):

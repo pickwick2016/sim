@@ -46,7 +46,7 @@ class Sensor:
             d = abs(util.a_norm(vec.angle(xyz1, xyz2), unit='r', type='-'))
             return d <= self.params
         if self.type == SensorType.Rect:
-            #TODO: 此方法有问题，应该利用坐标旋转进行计算.
+            # TODO: 此方法有问题，应该利用坐标旋转进行计算.
             da = abs(util.a_norm(ae[0] - self.direction[0], unit='r', type='-'))
             de = abs(util.a_norm(ae[1] - self.direction[1], unit='r', type='-'))
             return da <= self.params[0] and de <= self.params[1]
