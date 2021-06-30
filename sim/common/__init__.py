@@ -2,7 +2,7 @@
 
 from .aera import Area
 from .detector import Detector
-from .eo import EoDetector, EoState
+from .eo2 import EoDetector, EoState
 from .jammer import Jammer, JammerType
 from .laser2 import Laser, LaserState
 from .radar import Radar

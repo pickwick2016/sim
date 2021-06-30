@@ -28,15 +28,15 @@ class TestEo(unittest.TestCase):
     def test_detect(self):
         """ 测试检测功能. """
         eo = EoDetector(pos=[0, 0])
-        self.assertAlmostEqual(eo.dir[0], 0.0)  # 视场指向是0.
+        self.assertAlmostEqual(eo.direction[0], 0.0)  # 视场指向是0.
 
         obj = Target(pos=[10, 10])  # 视场外目标.
-        ret = eo.detect(obj)
+        ret = eo._detect(obj)
         self.assertTrue(ret is None)
 
         eo.guide([util.rad(45)], True) # 引导视场指向
-        self.assertAlmostEqual(eo.dir[0], util.rad(45))  # 视场指向是0.
-        ret = eo.detect(obj) 
+        self.assertAlmostEqual(eo.direction[0], util.rad(45))  # 视场指向是0.
+        ret = eo._detect(obj) 
         self.assertTrue(ret is not None)
 
     def test_run_1(self):
@@ -63,7 +63,7 @@ class TestEo(unittest.TestCase):
         scene.run(reset=False)
 
         self.assertTrue(len(recorder.results) == recorder.counter)  # 有引导，有结果.
-        values = [ret.value for ret in recorder.results]
+        values = [tuple(ret.value.tolist()) for ret in recorder.results]
         self.assertTrue(len(set(values)) == 1)  # 静止目标，结果唯一
 
         # 测试3.
@@ -77,7 +77,7 @@ class TestEo(unittest.TestCase):
         scene.run(reset=False)
 
         self.assertTrue(len(recorder.results) == recorder.counter)   # 有引导，有结果.
-        values = [ret.value for ret in recorder.results]
+        values = [tuple(ret.value.tolist()) for ret in recorder.results]
         self.assertTrue(len(values) == len(set(values)))  # 运动目标，结果不同
 
         # 测试4.
@@ -91,7 +91,7 @@ class TestEo(unittest.TestCase):
         scene.run(reset=False)
 
         self.assertTrue(101 >= len(recorder.results) >= 99)   # 有引导，有结果.
-        values = [ret.value for ret in recorder.results]
+        values = [tuple(ret.value.tolist()) for ret in recorder.results]
         self.assertTrue(len(values) == len(set(values)))  # 运动目标，结果不同
 
     def test_run_2(self):

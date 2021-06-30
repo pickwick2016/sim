@@ -14,7 +14,7 @@ from . import util
 from .sensor import Sensor, SensorType
 
 
-class Eo(Entity):
+class EoDetector(Entity):
     """ 光电探测设备. """
 
     def __init__(self, name: str = '', pos=(0, 0), **kwargs):
@@ -24,7 +24,7 @@ class Eo(Entity):
         self._guide_dir = None
         self._state = EoState.StandBy
         self._capacity = EoCapacity()
-        self._sensor = Sensor(self, SensorType.Conic, util.rad(3))
+        self._sensor = Sensor(parent=self, type=SensorType.Conic, params=util.rad(3))
         self._target = None
 
     def reset(self):
@@ -42,6 +42,10 @@ class Eo(Entity):
             self._access_on_track(others)
 
     @property
+    def direction(self):
+        return self._sensor.direction
+
+    @property
     def result(self):
         """ 跟踪/结果. """
         return self._target
@@ -49,6 +53,7 @@ class Eo(Entity):
     @property
     def state(self):
         return self._state
+
 
     def guide(self, ae, update=False):
         """ 接收引导. 
@@ -84,10 +89,10 @@ class Eo(Entity):
         assert self._target is not None
 
         find = False
-        if target := util.find(others, lambda obj: obj.id == self._target.id):
+        if target := util.find(others, lambda obj: obj.id == self._target.obj_id):
             if (aer := self._detect(target)) is not None:
                 self._sensor.direction = vec.vec2(aer)
-                self._target = target
+                self._target = EoTarget(self.clock_info[0], aer, target.id)
                 find = True
         if not find:
             self._state = EoState.StandBy
@@ -105,7 +110,7 @@ class Eo(Entity):
         return None
 
 
-EoCapacity = namedtuple('EoCapacity', field_names=['min', 'max', 'normal'])
+EoCapacity = namedtuple('EoCapacity', field_names=['normal', 'min', 'max'], defaults=[(5, 3), None, None])
 """ 光电探测能力描述. 
 """
 
